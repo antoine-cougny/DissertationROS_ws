@@ -122,6 +122,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
+  headers/
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -139,7 +140,6 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/trader_node.cpp)
-add_executable(${PROJECT_NAME}_metrics src/metricsNode.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,20 +150,26 @@ add_executable(${PROJECT_NAME}_metrics src/metricsNode.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME}_metrics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+
+### Task class
+add_library(task src/task.cpp)
+target_link_libraries(task ${catkin_LIBRARIES})
+
+### Metrics Node
+add_executable(${PROJECT_NAME}_metrics src/metricsNode.cpp)
+add_dependencies(${PROJECT_NAME}_metrics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_metrics ${catkin_LIBRARIES})
 
-
-
-###
+### Trader Node
 add_executable(${PROJECT_NAME}_trader src/traderNode.cpp)
 add_dependencies(${PROJECT_NAME}_trader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_trader ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_trader ${catkin_LIBRARIES} task)
 ###
 
 
