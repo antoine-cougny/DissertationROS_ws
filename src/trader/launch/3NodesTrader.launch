@@ -1,0 +1,31 @@
+<launch>
+    <group ns="robot1">
+        <node name="trader_trader" pkg="trader" type="trader_trader" />
+        <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+
+        <param name="robotId" type="int" value="1" />
+    </group>
+
+    <group ns="robot2">
+        <node name="trader_trader" pkg="trader" type="trader_trader" />
+        <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+
+        <param name="robotId" type="int" value="2" />
+    </group>
+
+    <group ns="robot3">
+        <node name="trader_trader" pkg="trader" type="trader_trader" />
+        <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+
+        <param name="robotId" type="int" value="3" />
+    </group>
+
+
+	<!-- Other packages -->
+	<node name="rqt_graph" pkg="rqt_graph" type="rqt_graph"/>
+	<!--
+    <node name="rqt_tf_tree" pkg="rqt_tf_tree" type="rqt_tf_tree"/>
+	<node name="rviz" pkg="rviz" type="rviz"/>
+    -->
+
+</launch>
