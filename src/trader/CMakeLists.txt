@@ -158,6 +158,15 @@ add_dependencies(${PROJECT_NAME}_metrics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 # )
 target_link_libraries(${PROJECT_NAME}_metrics ${catkin_LIBRARIES})
 
+
+
+###
+add_executable(${PROJECT_NAME}_trader src/traderNode.cpp)
+add_dependencies(${PROJECT_NAME}_trader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_trader ${catkin_LIBRARIES})
+###
+
+
 #############
 ## Install ##
 #############
