@@ -6,19 +6,20 @@
 #include "geometry_msgs/Pose.h"
 #include "trader/Task.h"
 #include "trader/metrics.h"
-/* #include <move_base_msgs/MoveBaseAction.h> */
+#include <move_base_msgs/MoveBaseActionFeedback.h>
 #include "move_base_msgs/MoveBaseFeedback.h"
 
-
+#include <iostream>
+using namespace std;
 //Action Feedback and Result
 /* typedef boost::shared_ptr< ::move_base_msgs::MoveBaseActionFeedback const > MoveBaseActionFeedbackConstPtr; */
 
 geometry_msgs::Pose myPose;
 
-void position_cb(const move_base_msgs::MoveBaseFeedback &msg)
+void position_cb(const move_base_msgs::MoveBaseActionFeedback &msg)
 {
     /* extern geometry_msgs::Pose myPos; */
-    myPose = msg.base_position.pose;
+    myPose = msg.feedback.base_position.pose;
 }
 
 /*
@@ -36,12 +37,26 @@ float calcMovingCost(geometry_msgs::Pose currentPose,
     float result = pow(currentPose.position.x - targetPose.position.x, 2)
                   + pow(currentPose.position.y - targetPose.position.y, 2) 
                   + pow(currentPose.position.z - targetPose.position.z, 2);
+    ROS_INFO("Current Position: %f, %f, %f", 
+                currentPose.position.x, 
+                currentPose.position.y, 
+                currentPose.position.z      );
+    /* cout << currentPose.position.x << " " << currentPose.position.y << " " << currentPose.position.z << endl; */
+    /* ROS_INFO("Target Positon: ", targetPose.position); */
+    ROS_INFO("Target Position: %f, %f, %f", 
+                targetPose.position.x,
+                targetPose.position.y,
+                targetPose.position.z       );
+    /* cout << targetPose.position.x << " " << targetPose.position.y << " " << targetPose.position.z << endl; */
     return sqrt(result);
 }
 
 bool metricsCalc_cb(trader::metrics::Request &Task, trader::metrics::Response &metrics)
 {
+    ROS_INFO("Got new position");
     metrics.cost = calcMovingCost(myPose, Task.task.goalPosition_p);
+    ROS_INFO("Cost: ");
+    cout << metrics.cost << endl;
     return true;
 }
 
@@ -53,7 +68,7 @@ int main(int argc, char **argv)
 
     /* geometry_msgs::Pose myPos; */
     // Topic used by the global planner of the Navigation Stack
-    ros::Subscriber position_sub = n.subscribe("move_base_simple/feedback", 1000, position_cb);
+    ros::Subscriber position_sub = n.subscribe("move_base/feedback", 1000, position_cb);
 
     // Service used by the trader to know the cost of going to such position
     ros::ServiceServer service = n.advertiseService("metricsNode", metricsCalc_cb);
