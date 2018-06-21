@@ -53,16 +53,54 @@ int main(int argc, char **argv)
     ros::Publisher taskToTrade_pub;
     taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2);
 
-    // Getting a new task from traderNode
+    // Getting a new task from traderNode (to be stored)
     ros::Subscriber newTask_sub = n.subscribe("newTask", 1, newTask_cb);
 
     // Metrics Service client, to get the metrics value
     ros::ServiceClient metrics_srvC;
     metrics_srvC = n.serviceClient<trader::metrics>("metricsNode");
 
+    // Task object
+    trader::Task task_msg;
+    int tradingThreshold; // Used to know if we do the task or we triger an auction
+    n.param<int>("tradingThreshold", tradingThreshold, 2);
+
+    std_msgs::Bool hasTasks_status;
 
     while (ros::ok())
     {
+        // Select a task in the list/vector
+        // TODO implement that :p
+
+        // Check the metrics of the selected task
+        trader::metrics metric_srv;
+        metric_srv.request.task = task_msg; 
+        if (metrics_srvC.call(metric_srv))
+        {
+            ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
+            if (metric_srv.response.cost > tradingThreshold)
+            {
+                // Send task to trader
+                ROS_INFO("Task too expensive, will be sent to traderNode");
+                taskToTrade_pub.publish(task_msg);
+            }
+            else
+            {
+                // Do the task
+                ROS_INFO("We will do the task");
+                sendGoal_pub.publish(task_msg); 
+            }
+        }
+        else
+        {
+            ROS_ERROR("Failed to call service metricsNode");
+        }
+
+        // Send status of task
+        int nb = 1; // TODO
+        hasTasks_status.data = (nb == 0) ? false : true;
+        hasTasks_pub.publish(hasTasks_status);
+
         loop_rate.sleep();
     }
 
