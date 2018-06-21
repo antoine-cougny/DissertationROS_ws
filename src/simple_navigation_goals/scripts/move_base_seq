@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # license removed for brevity
 __author__ = 'fiorellasibona'
+__author__ += ' & ant0ine'
 import rospy
 import math
 
@@ -9,14 +10,21 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
+from std_msgs.msg import Bool
 
+try:
+    from trader.msg import Task, actionToDo
+    msgCheck = True
+except:
+    print("Trader Custom msg not available")
+    msgCheck = False
 
 class MoveBaseSeq():
 
     def __init__(self):
 
         rospy.init_node('move_base_sequence')
-        points_seq = rospy.get_param('move_base_seq/p_seq')
+        points_seq = rospy.get_param('move_base_seq/p_seq', '[0,0,0]')
         # Only yaw angle required (no ratotions around x and y axes) in deg:
         yaweulerangles_seq = rospy.get_param('move_base_seq/yea_seq')
 
@@ -39,17 +47,26 @@ class MoveBaseSeq():
             n += 1
         #rospy.loginfo(str(self.pose_seq))
 
+        # List of task to perform on the different goal
+        # We make sure we have enough task to do in the list
+        self.task_seq = [actionToDo() for k in range(len(self.pose_seq))]
+        # For now the task do not do anything
+        for task in self.task_seq:
+            task.waitTime = 1 #sec
+
 
         # For timeout purpose with the last received msg
         self.last_msg = rospy.Time.now()
         self.timeFinishList = rospy.Time.now()
         # Subscriber to receive message
-        self.sub = rospy.Subscriber("goalSender", Pose, self.readNewGoal_cb)
+        self.sub = rospy.Subscriber("goalSender", Task, self.readNewGoal_cb)
         # I use a busy waiting to wait the server feddback
         self.goalReached = False
         # When all goals will be reached we will wait
         self.allGoalsReached = False
 
+        # Create a publisher to let other nodes if the robot is idle or not
+        self.isIdle_pub = rospy.Publisher("isIdle", Bool, 1)
 
         #Create action client
         self.client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
@@ -61,11 +78,11 @@ class MoveBaseSeq():
             return
         rospy.loginfo("Connected to move base server")
         rospy.loginfo("Starting goals achievements ...")
-        # self.movebase_client()
         self.runNode()
 
     def readNewGoal_cb(self, msg):
-        self.pose_seq.append(msg)
+        self.pose_seq.append(msg.goalPosition_p)
+        self.task_seq.append(msg.toDo)
         self.last_msg = rospy.Time.now()
         self.allGoalsReached = False
         rospy.loginfo("We Got A NEW GOAL")
@@ -105,7 +122,7 @@ class MoveBaseSeq():
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+\
                           " received a cancel request before it started executing, successfully cancelled!")
 
-    def movebase_client(self):
+    def movebase_client(self, nextPose):
         """
         Send a goal to the SimpleAction Server
         """
@@ -113,7 +130,7 @@ class MoveBaseSeq():
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
-        goal.target_pose.pose = self.pose_seq[self.goal_cnt]
+        goal.target_pose.pose = nextPose
         # Log
         rospy.loginfo("Sending goal pose "+str(self.goal_cnt+1)+" to Action Server")
         rospy.loginfo(str(self.pose_seq[self.goal_cnt]))
@@ -125,17 +142,27 @@ class MoveBaseSeq():
 
     def performTask(self, task):
         rospy.loginfo("Starting task at the last reached position")
+        rospy.loginfo("Waiting " + str(task.waitTime) + " sec here")
+        rospy.sleep(task.waitTime)
         return
 
     def runNode(self):
         rospy.loginfo("Starting while loop")
         while not rospy.is_shutdown():
             rospy.sleep(0.5)
+
+            # We advertise if the robot is idle or not. We consider it
+            # to be in an 'idle' state when all the tasks this node received
+            # have been done/achieved by the nav stack
+            state = Bool()
+            state.data = self.allGoalsReached
+            self.isIdle_pub.publish(state)
+
             if self.goal_cnt < len(self.pose_seq):
                 # Sending a new goal to the stack
                 rospy.logwarn("Sending new goal")
                 self.goalReached = False
-                self.movebase_client()
+                self.movebase_client(self.pose_seq[self.goal_cnt])
 
                 # Wait for callback of goal being reached
                 while not self.goalReached:
@@ -144,7 +171,7 @@ class MoveBaseSeq():
 
                 # Goal achieved, perform a task
                 task = 0 # for now 
-                self.performTask(task)
+                self.performTask(self.task_seq[self.goal_cnt])
             else:
                 # The list of nodes has been visited
                 self.allGoalsReached = True
@@ -161,6 +188,7 @@ class MoveBaseSeq():
 
 if __name__ == '__main__':
     try:
-        MoveBaseSeq()
+        if msgCheck:
+            MoveBaseSeq()
     except rospy.ROSInterruptException:
         rospy.loginfo("Navigation finished.")
