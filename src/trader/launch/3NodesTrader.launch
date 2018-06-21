@@ -1,4 +1,9 @@
 <launch>
+    <group ns="computer">
+        <node name="computer_trader" pkg="trader" type="trader_trader" />
+        <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
+    </group>
+
     <group ns="robot1">
         <node name="trader_trader" pkg="trader" type="trader_trader" />
         <node name="trader_metrics" pkg="trader" type="trader_metrics" />
