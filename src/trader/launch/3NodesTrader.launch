@@ -2,6 +2,14 @@
     <group ns="robot1">
         <node name="trader_trader" pkg="trader" type="trader_trader" />
         <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+        <node name="trader_decision" pkg="trader" type="trader_decision" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <!-- Load Sequence of Points (Cartesian Coordinates wrt "map" RF, in meters) -->
+            <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
+            <!-- Load Sequence of Desired Yaw Angles (no rotations around x and y axes) in degrees-->
+            <rosparam param="yea_seq">[90,0,180]</rosparam>
+        </node>
 
         <param name="robotId" type="int" value="1" />
     </group>
@@ -9,16 +17,30 @@
     <group ns="robot2">
         <node name="trader_trader" pkg="trader" type="trader_trader" />
         <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+        <node name="trader_decision" pkg="trader" type="trader_decision" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
+            <rosparam param="yea_seq">[90,0,180]</rosparam>
+        </node>
 
         <param name="robotId" type="int" value="2" />
     </group>
 
+    <!--
     <group ns="robot3">
         <node name="trader_trader" pkg="trader" type="trader_trader" />
         <node name="trader_metrics" pkg="trader" type="trader_metrics" />
+        <node name="trader_decision" pkg="trader" type="trader_decision" />
+        
+        <node name="taskExec" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
+            <rosparam param="yea_seq">[90,0,180]</rosparam>
+        </node>
 
         <param name="robotId" type="int" value="3" />
     </group>
+    -->
 
 
 	<!-- Other packages -->
