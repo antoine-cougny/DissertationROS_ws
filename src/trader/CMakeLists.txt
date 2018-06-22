@@ -55,13 +55,15 @@ add_message_files(
   actionToDo.msg
   Task.msg
   announcement.msg
+  bid.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   metrics.srv
-#   Service2.srv
+  auctionWinner.srv
+  taskToBeTraded.srv
 )
 
 ## Generate actions in the 'action' folder
