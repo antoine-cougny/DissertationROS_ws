@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 // Ros
 #include "ros/ros.h"
 #include "std_msgs/String.h"
@@ -8,8 +9,10 @@
 #include "geometry_msgs/Pose.h"
 // Custom messages
 #include "trader/Task.h"
-#include "trader/metrics.h"
 #include "trader/announcement.h"
+// Custom services
+#include "trader/metrics.h"
+#include "trader/taskToBeTraded.h"
 // Task class
 #include "task.h"
 
@@ -17,6 +20,7 @@ using namespace std;
 
 int idRobot = 0;
 string ns;
+vector<trader::Task> vecTaskToDo;
 
 /*******************************************************************************
  *
@@ -32,6 +36,7 @@ void newTask_cb(const trader::Task &msg)
 {
     // Do some stuff like adding it to an array or a vector
     // Pay attention to pointers and content of the message
+    vecTaskToDo.push_back(msg);
 }
 
 int main(int argc, char **argv)
@@ -50,8 +55,10 @@ int main(int argc, char **argv)
     ros::Publisher sendGoal_pub;
     sendGoal_pub = n.advertise<trader::Task>("sendGoal", 10);
     // Send a goal to be traded
-    ros::Publisher taskToTrade_pub;
-    taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2);
+    /* ros::Publisher taskToTrade_pub; */
+    /* taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2); */
+    ros::ServiceClient taskToTrade_srvC;
+    taskToTrade_srvC = n.serviceClient<trader::taskToBeTraded>("taskToBeTraded");
 
     // Getting a new task from traderNode (to be stored)
     ros::Subscriber newTask_sub = n.subscribe("newTask", 2, newTask_cb);
@@ -67,10 +74,15 @@ int main(int argc, char **argv)
 
     std_msgs::Bool hasTasks_status;
 
+    // Random pick a task
+    default_random_engine generator;
+
     while (ros::ok())
     {
-        // Select a task in the list/vector
-        // TODO implement that :p
+        // Select a task in the vector (uniform distribution)
+        uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
+        int index_selectedTask = distribution(generator);
+        task_msg = vecTaskToDo[index_selectedTask];
 
         // Check the metrics of the selected task
         trader::metrics metric_srv;
@@ -82,7 +94,29 @@ int main(int argc, char **argv)
             {
                 // Send task to trader
                 ROS_INFO("Task too expensive, will be sent to traderNode");
-                taskToTrade_pub.publish(task_msg);
+                /* taskToTrade_pub.publish(task_msg); */
+
+                // We use a service to have a feedback on the status of traderNode
+                trader::taskToBeTraded taskTrade_srv;
+                taskTrade_srv.request.task = task_msg;
+                if (taskToTrade_srvC.call(taskTrade_srv))
+                {
+                    if (taskTrade_srv.response.auctionReady.data)
+                    {
+                        // Delete task from vector
+                        vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
+                    }
+                    else
+                    {
+                        // Trader is busy, leave task in vector, pick another one
+                        // TODO: if trader is busy, shall we perform the task or try later?
+                        ROS_INFO("traderNode is busy");
+                    }
+                }
+                else
+                {
+                    ROS_ERROR("Failed service call for task to traderNode");
+                }
             }
             else
             {
@@ -97,8 +131,7 @@ int main(int argc, char **argv)
         }
 
         // Send status of task
-        int nb = 1; // TODO
-        hasTasks_status.data = (nb == 0) ? false : true;
+        hasTasks_status.data = (vecTaskToDo.size() == 0) ? false : true;
         hasTasks_pub.publish(hasTasks_status);
 
         ros::spinOnce();
