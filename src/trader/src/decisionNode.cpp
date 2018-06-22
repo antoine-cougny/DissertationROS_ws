@@ -45,16 +45,16 @@ int main(int argc, char **argv)
 
     // Advertise it there are tasks saved
     ros::Publisher hasTasks_pub;
-    hasTasks_pub = n.advertise<std_msgs::Bool>("hasTasks", 1);
+    hasTasks_pub = n.advertise<std_msgs::Bool>("hasTasks", 10);
     // Sending goal to the task exec
     ros::Publisher sendGoal_pub;
-    sendGoal_pub = n.advertise<trader::Task>("sendGoal", 1);
+    sendGoal_pub = n.advertise<trader::Task>("sendGoal", 10);
     // Send a goal to be traded
     ros::Publisher taskToTrade_pub;
     taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2);
 
     // Getting a new task from traderNode (to be stored)
-    ros::Subscriber newTask_sub = n.subscribe("newTask", 1, newTask_cb);
+    ros::Subscriber newTask_sub = n.subscribe("newTask", 2, newTask_cb);
 
     // Metrics Service client, to get the metrics value
     ros::ServiceClient metrics_srvC;
@@ -101,6 +101,7 @@ int main(int argc, char **argv)
         hasTasks_status.data = (nb == 0) ? false : true;
         hasTasks_pub.publish(hasTasks_status);
 
+        ros::spinOnce();
         loop_rate.sleep();
     }
 
