@@ -1,35 +1,46 @@
 <launch>
     <group ns="computer">
-        <node name="computer_trader" pkg="trader" type="trader_trader" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metricsPC" pkg="trader" type="trader_metricsPC" />
         <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
+
+        <param name="acceptanceThresold" type="int" value="0" />
+        <param name="robotPK" value="yyy"/>
+        <param name="tradingThreshold" type="int" value="10" />
+        <param name="idRobot" type="int" value="0" />
     </group>
 
     <group ns="robot1">
-        <node name="trader_trader" pkg="trader" type="trader_trader" />
-        <node name="trader_metrics" pkg="trader" type="trader_metrics" />
-        <node name="trader_decision" pkg="trader" type="trader_decision" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <!--<node name="decision" pkg="trader" type="trader_decision" />-->
 
+        <!--
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
-            <!-- Load Sequence of Points (Cartesian Coordinates wrt "map" RF, in meters) -->
             <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
-            <!-- Load Sequence of Desired Yaw Angles (no rotations around x and y axes) in degrees-->
             <rosparam param="yea_seq">[90,0,180]</rosparam>
-        </node>
+        </node>-->
 
-        <param name="robotId" type="int" value="1" />
+        <param name="acceptanceThresold" type="int" value="1" />
+        <param name="robotPK" value="yyy"/>
+        <param name="tradingThreshold" value="10" />
+        <param name="idRobot" type="int" value="1" />
     </group>
 
     <group ns="robot2">
-        <node name="trader_trader" pkg="trader" type="trader_trader" />
-        <node name="trader_metrics" pkg="trader" type="trader_metrics" />
-        <node name="trader_decision" pkg="trader" type="trader_decision" />
+        <!--<node name="trader_trader" pkg="trader" type="trader_trader" />
+        <node name="trader_metrics" pkg="trader" type="trader_metrics" />-->
+        <!--<node name="trader_decision" pkg="trader" type="trader_decision" />-->
 
-        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+       <!-- <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
             <rosparam param="yea_seq">[90,0,180]</rosparam>
-        </node>
+        </node>-->
 
-        <param name="robotId" type="int" value="2" />
+        <param name="acceptanceThresold" type="int" value="1" />
+        <param name="robotPK" value="yyy"/>
+        <param name="tradingThreshold" type="int" value="10" />
+        <param name="idRobot" type="int" value="2" />
     </group>
 
     <!--
