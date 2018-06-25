@@ -2,8 +2,15 @@
 
 #include <iostream>
 
+using namespace std;
+
+void Task::printInfo()
+{
+    cout << "info" << endl;
+}
+
 int main(int argc, char **argv)
 {
-    std::cout << "test" << std::endl;
+    cout << "test" << endl;
     return 0;
 }
