@@ -15,6 +15,7 @@
 #include "trader/metrics.h"
 #include "trader/auctionWinner.h"
 #include "trader/taskToBeTraded.h"
+#include "trader/bid_srv.h"
 // Task class
 #include "task.h"
 
@@ -96,6 +97,21 @@ void bidTrade_cb(const trader::bid &msg)
     }
 }
 
+bool bidTrade_cb_srv(trader::bid_srv::Request  &req,
+                     trader::bid_srv::Response &res)
+{
+    res.acceptedBid = false;
+
+    if (req.idTask.compare(announceTask.idTask) == 0)
+    {
+        // The received bid is about the task we announced
+        vecBid.push_back(req.bid);
+        vecIdRobotSrv.push_back(req.idRobot);
+        res.acceptedBid = true;
+    }
+
+    return true;
+}
 
 bool biddingStatus_cb(trader::auctionWinner::Request  &req,
                       trader::auctionWinner::Response &res)
@@ -168,10 +184,16 @@ int main(int argc, char **argv)
 
             // Create topic on the fly and Publish annoucement message
             // TODO: switch to service?
-            ros::Publisher customTopic_pub;
-            customTopic_pub = n.advertise<trader::bid>(announceTask.topic, 10);
-            ros::Subscriber customTopic_sub;
-            customTopic_sub = n.subscribe(announceTask.topic, 10, bidTrade_cb);
+            /* ros::Publisher customTopic_pub; */
+            /* customTopic_pub = n.advertise<trader::bid>(announceTask.topic, 10); */
+            /* ros::Subscriber customTopic_sub; */
+            /* customTopic_sub = n.subscribe(announceTask.topic, 10, bidTrade_cb); */
+
+            // Switch to service
+            ros::ServiceServer customSrv_bid;
+            customSrv_bid = n.advertiseService(announceTask.topic, bidTrade_cb_srv);
+
+            // Publish the annoucement message
             announcement_pub.publish(announceTask);
 
             // We wait 10 sec
@@ -225,6 +247,7 @@ int main(int argc, char **argv)
                 ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
                 if (metric_srv.response.cost < acceptanceThreshold)
                 {
+                    /*
                     // We decide to bid on the task
                     ros::Publisher customTopic_bid_pub;
                     customTopic_bid_pub = n.advertise<trader::bid>(receivedTaskToSave.topic, 10);
@@ -234,25 +257,46 @@ int main(int argc, char **argv)
                     bid_msg.idTask = receivedTaskToSave.idTask;
                     bid_msg.idRobot = idRobot;
                     bid_msg.bid = metric_srv.response.cost;
-                    // Create service server before sending bid th handle the result of the auction
+                    // Create service server before sending bid the handle the result of the auction
                     ros::ServiceServer biddingSrvServer = n.advertiseService
                         (receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
 
                     // Sending bid
                     customTopic_bid_pub.publish(bid_msg);
+                    */
+
+                    // SERVICE VERSION
+                    // We decide to bid on the task
+                    ros::ServiceClient customSrv_bid_srvC;
+                    customSrv_bid_srvC = n.serviceClient<trader::bid_srv>
+                            (receivedTaskToSave.topic);
+
+                    // Create bid message - service
+                    trader::bid_srv bid_msg;
+                    bid_msg.request.idTask = receivedTaskToSave.idTask;
+                    bid_msg.request.idRobot = idRobot;
+                    bid_msg.request.bid = metric_srv.response.cost;
+
+                    // Create service server before sending bid the handle
+                    // the result of the auction
+                    ros::ServiceServer biddingSrvServer = n.advertiseService
+                        (receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
+
+                    // Sending
+                    if (customSrv_bid_srvC.call(bid_msg))
+                        ROS_INFO("Called service");
+                    else
+                        ROS_ERROR("Failed to submit bid");
 
                     // Wait for answer - THIS IS DONE WITH THE CALLBACK FCT
                     // If we won, send the task to the decisionNode
                 }
                 else
-                {
                     ROS_INFO("We do not bid on this task");
-                }
             }
             else
-            {
                 ROS_ERROR("Failed to call service metricsNode");
-            }
+
             // Clear Variables
             external_auction_available = false;
         }
