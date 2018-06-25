@@ -1,0 +1,3 @@
+<launch>
+    <node name="decision" pkg="trader" type="trader_decision" launch-prefix="valgrind" />
+</launch>
