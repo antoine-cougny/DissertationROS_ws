@@ -169,7 +169,10 @@ target_link_libraries(task ${catkin_LIBRARIES})
 add_executable(${PROJECT_NAME}_metrics src/metricsNode.cpp)
 add_dependencies(${PROJECT_NAME}_metrics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_metrics ${catkin_LIBRARIES})
-
+# Metrics PC
+add_executable(${PROJECT_NAME}_metricsPC src/metricsNodeComputer.cpp)
+add_dependencies(${PROJECT_NAME}_metricsPC ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_metricsPC ${catkin_LIBRARIES})
 ### Trader Node
 add_executable(${PROJECT_NAME}_trader src/traderNode.cpp)
 add_dependencies(${PROJECT_NAME}_trader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
