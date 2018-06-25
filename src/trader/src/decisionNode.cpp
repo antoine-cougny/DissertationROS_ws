@@ -18,7 +18,7 @@
 
 using namespace std;
 
-int idRobot = 0;
+int idRobot = 1000;
 string ns;
 vector<trader::Task> vecTaskToDo;
 
@@ -41,7 +41,7 @@ void newTask_cb(const trader::Task &msg)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "traderRobot");
+    ros::init(argc, argv, "decisionRobot");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
 
@@ -70,6 +70,7 @@ int main(int argc, char **argv)
     // Task object
     trader::Task task_msg;
     int tradingThreshold; // Used to know if we do the task or we trigger an auction
+    n.param<int>("idRobot", idRobot, 0);
     n.param<int>("tradingThreshold", tradingThreshold, 2);
 
     std_msgs::Bool hasTasks_status;
@@ -79,55 +80,58 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-        // Select a task in the vector (uniform distribution)
-        uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
-        int index_selectedTask = distribution(generator);
-        task_msg = vecTaskToDo[index_selectedTask];
-
-        // Check the metrics of the selected task
-        trader::metrics metric_srv;
-        metric_srv.request.task = task_msg; 
-        if (metrics_srvC.call(metric_srv))
+        if (vecTaskToDo.size())
         {
-            ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
-            if (metric_srv.response.cost > tradingThreshold)
-            {
-                // Send task to trader
-                ROS_INFO("Task too expensive, will be sent to traderNode");
-                /* taskToTrade_pub.publish(task_msg); */
+            // Select a task in the vector (uniform distribution)
+            uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
+            int index_selectedTask = distribution(generator);
+            task_msg = vecTaskToDo[index_selectedTask];
 
-                // We use a service to have a feedback on the status of traderNode
-                trader::taskToBeTraded taskTrade_srv;
-                taskTrade_srv.request.task = task_msg;
-                if (taskToTrade_srvC.call(taskTrade_srv))
+            // Check the metrics of the selected task
+            trader::metrics metric_srv;
+            metric_srv.request.task = task_msg; 
+            if (metrics_srvC.call(metric_srv))
+            {
+                ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
+                if (metric_srv.response.cost > tradingThreshold)
                 {
-                    if (taskTrade_srv.response.auctionReady.data)
+                    // Send task to trader
+                    ROS_INFO("Task too expensive, will be sent to traderNode");
+                    /* taskToTrade_pub.publish(task_msg); */
+
+                    // We use a service to have a feedback on the status of traderNode
+                    trader::taskToBeTraded taskTrade_srv;
+                    taskTrade_srv.request.task = task_msg;
+                    if (taskToTrade_srvC.call(taskTrade_srv))
                     {
-                        // Delete task from vector
-                        vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
+                        if (taskTrade_srv.response.auctionReady.data)
+                        {
+                            // Delete task from vector
+                            vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
+                        }
+                        else
+                        {
+                            // Trader is busy, leave task in vector, pick another one
+                            // TODO: if trader is busy, shall we perform the task or try later?
+                            ROS_INFO("traderNode is busy");
+                        }
                     }
                     else
                     {
-                        // Trader is busy, leave task in vector, pick another one
-                        // TODO: if trader is busy, shall we perform the task or try later?
-                        ROS_INFO("traderNode is busy");
+                        ROS_ERROR("Robot %d Failed service call for task to traderNode", idRobot);
                     }
                 }
                 else
                 {
-                    ROS_ERROR("Failed service call for task to traderNode");
+                    // Do the task
+                    ROS_INFO("Robot %d We will do the task", idRobot);
+                    sendGoal_pub.publish(task_msg); 
                 }
             }
             else
             {
-                // Do the task
-                ROS_INFO("We will do the task");
-                sendGoal_pub.publish(task_msg); 
+                ROS_ERROR("Robot %d Failed to call service metricsNode", idRobot);
             }
-        }
-        else
-        {
-            ROS_ERROR("Failed to call service metricsNode");
         }
 
         // Send status of task
