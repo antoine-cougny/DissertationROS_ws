@@ -37,26 +37,23 @@ float calcMovingCost(geometry_msgs::Pose currentPose,
     float result = pow(currentPose.position.x - targetPose.position.x, 2)
                   + pow(currentPose.position.y - targetPose.position.y, 2) 
                   + pow(currentPose.position.z - targetPose.position.z, 2);
-    ROS_INFO("Current Position: %f, %f, %f", 
-                currentPose.position.x, 
-                currentPose.position.y, 
-                currentPose.position.z      );
-    /* cout << currentPose.position.x << " " << currentPose.position.y << " " << currentPose.position.z << endl; */
+    /* ROS_INFO("Current Position: %f, %f, %f", */ 
+    /*             currentPose.position.x, */ 
+    /*             currentPose.position.y, */ 
+    /*             currentPose.position.z      ); */
     /* ROS_INFO("Target Positon: ", targetPose.position); */
-    ROS_INFO("Target Position: %f, %f, %f", 
-                targetPose.position.x,
-                targetPose.position.y,
-                targetPose.position.z       );
-    /* cout << targetPose.position.x << " " << targetPose.position.y << " " << targetPose.position.z << endl; */
+    /* ROS_INFO("Target Position: %f, %f, %f", */ 
+    /*             targetPose.position.x, */
+    /*             targetPose.position.y, */
+    /*             targetPose.position.z       ); */
     return sqrt(result);
 }
 
 bool metricsCalc_cb(trader::metrics::Request &Task, trader::metrics::Response &metrics)
 {
-    ROS_INFO("Got new position");
+    /* ROS_INFO("Got new position"); */
     metrics.cost = calcMovingCost(myPose, Task.task.goalPosition_p);
-    ROS_INFO("Cost: ");
-    cout << metrics.cost << endl;
+    ROS_INFO("Cost: %.3f", metrics.cost);
     return true;
 }
 
