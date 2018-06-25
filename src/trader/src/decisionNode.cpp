@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
     // Task object
     trader::Task task_msg;
-    int tradingThreshold; // Used to know if we do the task or we triger an auction
+    int tradingThreshold; // Used to know if we do the task or we trigger an auction
     n.param<int>("tradingThreshold", tradingThreshold, 2);
 
     std_msgs::Bool hasTasks_status;
