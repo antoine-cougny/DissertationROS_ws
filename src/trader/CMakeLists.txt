@@ -64,6 +64,7 @@ add_service_files(
   metrics.srv
   auctionWinner.srv
   taskToBeTraded.srv
+  bid_srv.srv
 )
 
 ## Generate actions in the 'action' folder
