@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include <vector>
 // Ros
 #include "ros/ros.h"
@@ -22,7 +23,7 @@
 using namespace std;
 
 string ns;
-int idRobot = 0;
+int idRobot = 1000;
 string robotPK;
 bool isIdle = true,
      hasTasks = false;
@@ -45,18 +46,19 @@ int indexofSmallestElement(vector<int>& vec);
 
 void announcement_cb(const trader::announcement &msg)
 {
-    ROS_INFO("got msg");
-    if (is_task_available_for_trading || !is_robot_available_for_trading)
+    if (msg.idTask.compare(announceTask.idTask) != 0)
+    {
+        ROS_INFO("Accepted incomming task for trading");
+        receivedTaskToSave = msg;
+        external_auction_available = true;
+    }
+    else
     {
         // Ignore message because we triggered this auction
         // !!! Not safe if 2 auctions at the same time.
         // !!! TODO: verif on ID but will be implemented later by using the PK
         //           of the token on the blockchain to id it.
-    }
-    else
-    {
-        receivedTaskToSave = msg;
-        external_auction_available = true;
+        ROS_INFO("Task rejected because we launched it");
     }
 }
 
@@ -120,10 +122,12 @@ bool biddingStatus_cb(trader::auctionWinner::Request  &req,
     if (req.isWinner)
     {
         // We send the task to the decisionNode and send back the pk
+        ROS_INFO("Robot %d won the auction", idRobot);
         res.pk = robotPK;
         newTask_pub.publish(receivedTaskToSave.task);
     }
     else
+        ROS_INFO("Robot %d lost the auction", idRobot);
         res.pk = "";
 
 
@@ -140,6 +144,7 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
 
     ns = ros::this_node::getNamespace();
+    ns = ns.substr(1, ns.size() - 1);
 
     // Announcement Messages
     ros::Publisher  announcement_pub;
@@ -164,8 +169,9 @@ int main(int argc, char **argv)
     metrics_srvC = n.serviceClient<trader::metrics>("metricsNode");
 
     // Variables declaration
-    int sleepTrading = 10; // sec.
+    int sleepTrading = 20; // sec.
     int acceptanceThreshold; // Used to know if we do the task or we trigger an auction
+    n.param<int>("idRobot", idRobot, 0);
     n.param<int>("acceptanceThreshold", acceptanceThreshold, 2);
     n.param<string>("robotPK", robotPK, "xxx"); // TODO
     
@@ -174,72 +180,106 @@ int main(int argc, char **argv)
         // TODO: divide code in functions :p
         if (is_task_available_for_trading)
         {
+            ROS_INFO("Start of auction");
             // We trigger an auction 
             is_robot_available_for_trading = false;
+
             // Announcement message
-            announceTask.idTask = to_string(ros::Time::now().sec); // TODO: use pk of blockchain
+            announceTask.idTask = receivedTaskToTrade.id;//to_string(ros::Time::now().sec); // TODO: use pk of blockchain
             announceTask.idRobot = idRobot;
             announceTask.task = receivedTaskToTrade;
-            announceTask.topic = ns + "_" + announceTask.idTask;
+            announceTask.topic = ns + "" + announceTask.idTask;
+            ROS_WARN("Name of service to bid: %s ", announceTask.topic.c_str());
 
             // Create topic on the fly and Publish annoucement message
-            // TODO: switch to service?
-            /* ros::Publisher customTopic_pub; */
-            /* customTopic_pub = n.advertise<trader::bid>(announceTask.topic, 10); */
-            /* ros::Subscriber customTopic_sub; */
-            /* customTopic_sub = n.subscribe(announceTask.topic, 10, bidTrade_cb); */
-
             // Switch to service
+            ROS_INFO("Start custom service server to collect bid");
             ros::ServiceServer customSrv_bid;
             customSrv_bid = n.advertiseService(announceTask.topic, bidTrade_cb_srv);
 
             // Publish the annoucement message
+            ROS_INFO("Publish announcement message");
             announcement_pub.publish(announceTask);
 
             // We wait 10 sec
             // TODO: find a better implementation
-            ros::Duration(sleepTrading).sleep();
-
-            // We will select the winner and a service message to him
-            // The others will get a no
-            // TODO: what is the smallest cost is bigger than our cost?
-            int indexWinner = indexofSmallestElement(vecBid);
-            
-            // We tell the winner his victory
-            trader::auctionWinner winnerSrv;
-            winnerSrv.request.isWinner = true;
-            ros::ServiceClient winnerSrvClient;
-            winnerSrvClient = n.serviceClient<trader::auctionWinner>
-                (announceTask.idTask + "_" + to_string(vecIdRobotSrv[indexWinner]));
-            winnerSrvClient.call(winnerSrv);
-
-            // We send a signal to the blockchainNode
-            // TODO
-
-            // We tell the others that they lost
-            for (int i = 0; i < vecIdRobotSrv.size() ; i++)
+            ROS_INFO("Wait %d seconds", sleepTrading);
+            /* ros::Duration(sleepTrading).sleep(); */
+            ros::Time start_waiting = ros::Time::now();
+            while (ros::Time::now() - start_waiting < ros::Duration(sleepTrading))
             {
-                if (i != indexWinner)
+                ros::spinOnce();
+                loop_rate.sleep();
+            }
+
+            // We make sure we got at least one bid
+            ROS_INFO("We got %d bid(s)", vecIdRobotSrv.size());
+            if (vecIdRobotSrv.size())
+            {
+                // We will select the winner and a service message to him
+                // The others will get a no
+                // TODO: what is the smallest cost is bigger than our cost?
+                int indexWinner = indexofSmallestElement(vecBid);
+                
+                // We tell the winner his victory
+                ROS_INFO("Tell the winner the auction has ended");
+                ROS_INFO("The winner is robot id %d", vecIdRobotSrv[indexWinner]);
+                ROS_WARN("Contacting the winner with the service %s", 
+                    ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[indexWinner])).c_str());
+                trader::auctionWinner winnerSrv;
+                winnerSrv.request.isWinner = true;
+                ros::ServiceClient winnerSrvClient;
+                winnerSrvClient = n.serviceClient<trader::auctionWinner>
+                    ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[indexWinner]));
+                if (winnerSrvClient.call(winnerSrv))
+                    ROS_INFO("Winner is aware");
+                else
+                    ROS_ERROR("Failed to contact winner");
+
+                // We send a signal to the blockchainNode
+                // TODO
+
+                // We tell the others that they lost
+                ROS_INFO("Tell the other robots they lost");
+                for (int i = 0; i < vecIdRobotSrv.size() ; i++)
                 {
-                    trader::auctionWinner looserSrv;
-                    looserSrv.request.isWinner = false;
-                    ros::ServiceClient looserSrvClient = n.serviceClient
-                        <trader::auctionWinner>
-                        (announceTask.idTask + "_" + to_string(vecIdRobotSrv[i]));
-                    looserSrvClient.call(looserSrv);
+                    if (i != indexWinner)
+                    {
+                        trader::auctionWinner looserSrv;
+                        looserSrv.request.isWinner = false;
+                        ros::ServiceClient looserSrvClient = n.serviceClient
+                            <trader::auctionWinner>
+                            (announceTask.idTask + "" + to_string(vecIdRobotSrv[i]));
+                        if (looserSrvClient.call(looserSrv))
+                            ROS_INFO("Contacted looser");
+                        else
+                            ROS_ERROR("Failed to contact looser");
+                    }
                 }
+            }
+            else
+            {
+                // Send the task back to the decision node
+                // TODO: make test on id/ns: for computer, we want to continue sending it
+                newTask_pub.publish(receivedTaskToSave.task);
+                ROS_INFO("Sending the task back to the decision node");
+                /* receivedTaskToSave = 0; */
             }
  
             // Auction has ended, clear variables
+            ROS_INFO("Cleaning variables");
             is_robot_available_for_trading = true;
+            is_task_available_for_trading = false;
             vecIdRobotSrv.clear();
             vecBid.clear();
         }
 
         // We participate in an external auction
-        if (external_auction_available)
+        else if (external_auction_available)
         {
+            is_robot_available_for_trading = false;
             // Check the metrics of the selected task
+            ROS_INFO("We received an auction offer");
             trader::metrics metric_srv;
             metric_srv.request.task = receivedTaskToSave.task; 
             if (metrics_srvC.call(metric_srv))
@@ -247,31 +287,18 @@ int main(int argc, char **argv)
                 ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
                 if (metric_srv.response.cost < acceptanceThreshold)
                 {
-                    /*
-                    // We decide to bid on the task
-                    ros::Publisher customTopic_bid_pub;
-                    customTopic_bid_pub = n.advertise<trader::bid>(receivedTaskToSave.topic, 10);
-
-                    // Create bid message
-                    trader::bid bid_msg;
-                    bid_msg.idTask = receivedTaskToSave.idTask;
-                    bid_msg.idRobot = idRobot;
-                    bid_msg.bid = metric_srv.response.cost;
-                    // Create service server before sending bid the handle the result of the auction
-                    ros::ServiceServer biddingSrvServer = n.advertiseService
-                        (receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
-
-                    // Sending bid
-                    customTopic_bid_pub.publish(bid_msg);
-                    */
-
+                    ROS_INFO("Robot %d is bidding", idRobot);
                     // SERVICE VERSION
                     // We decide to bid on the task
+                    
+                    ROS_INFO("Creation of the service server to get answer from the trader leader");
+                    ROS_WARN("Name of the service we bid on: %s ",receivedTaskToSave.topic.c_str());
                     ros::ServiceClient customSrv_bid_srvC;
                     customSrv_bid_srvC = n.serviceClient<trader::bid_srv>
                             (receivedTaskToSave.topic);
 
                     // Create bid message - service
+                    ROS_INFO("Create bid_msg");
                     trader::bid_srv bid_msg;
                     bid_msg.request.idTask = receivedTaskToSave.idTask;
                     bid_msg.request.idRobot = idRobot;
@@ -279,26 +306,37 @@ int main(int argc, char **argv)
 
                     // Create service server before sending bid the handle
                     // the result of the auction
+                    ROS_WARN("Name of the service to announce the result: %s",
+                        ("/" + receivedTaskToSave.idTask + "" + to_string(idRobot)).c_str());
                     ros::ServiceServer biddingSrvServer = n.advertiseService
-                        (receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
+                        ("/" + receivedTaskToSave.idTask + "" + to_string(idRobot), biddingStatus_cb);
 
                     // Sending
                     if (customSrv_bid_srvC.call(bid_msg))
-                        ROS_INFO("Called service");
+                        ROS_INFO("Called bidding service with the bid %.3f", (double) bid_msg.request.bid);
                     else
-                        ROS_ERROR("Failed to submit bid");
+                        ROS_ERROR("Robot %d Failed to submit bid", idRobot);
+                    
 
                     // Wait for answer - THIS IS DONE WITH THE CALLBACK FCT
                     // If we won, send the task to the decisionNode
+                    ros::Time start_waiting = ros::Time::now();
+                    while (ros::Time::now() - start_waiting < ros::Duration(sleepTrading + 5))
+                    {
+                        ros::spinOnce();
+                        loop_rate.sleep();
+                    }
                 }
                 else
-                    ROS_INFO("We do not bid on this task");
+                    ROS_INFO("Robot %d We do not bid on this task", idRobot);
             }
             else
-                ROS_ERROR("Failed to call service metricsNode");
+                ROS_ERROR("Robot %d Failed to call service metricsNode", idRobot);
 
             // Clear Variables
+            is_robot_available_for_trading = true;
             external_auction_available = false;
+            ROS_INFO("Auction DONE for trader");
         }
 
         ros::spinOnce();
