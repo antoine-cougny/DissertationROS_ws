@@ -104,7 +104,7 @@ int main(int argc, char **argv)
                     taskTrade_srv.request.task = task_msg;
                     if (taskToTrade_srvC.call(taskTrade_srv))
                     {
-                        if (taskTrade_srv.response.auctionReady.data)
+                        if (taskTrade_srv.response.auctionReady)
                         {
                             // Delete task from vector
                             vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
