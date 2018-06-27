@@ -66,12 +66,12 @@ class MoveBaseSeq():
         self.allGoalsReached = False
 
         # Create a publisher to let other nodes if the robot is idle or not
-        self.isIdle_pub = rospy.Publisher("isIdle", Bool, 1)
+        self.isIdle_pub = rospy.Publisher("isIdle", Bool, queue_size=10)
 
         #Create action client
         self.client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
-        wait = self.client.wait_for_server(rospy.Duration(5.0))
+        wait = self.client.wait_for_server(rospy.Duration(10.0))
         if not wait:
             rospy.logerr("Action server not available!")
             rospy.signal_shutdown("Action server not available!")
@@ -170,20 +170,23 @@ class MoveBaseSeq():
                     rospy.loginfo("Small wait")
 
                 # Goal achieved, perform a task
-                task = 0 # for now 
-                self.performTask(self.task_seq[self.goal_cnt])
+                task = 0 # for now
+                # -1 because +1 when goal is reached
+                self.performTask(self.task_seq[self.goal_cnt-1])
+                rospy.loginfo("Task done")
             else:
                 # The list of nodes has been visited
                 self.allGoalsReached = True
                 self.timeFinishList = rospy.Time.now()
+                #rospy.loginfo("we wait for smth to do")
 
             # Auto closing after 5min
-            timeoutDelay = 300 # sec
-            if rospy.Time.now() - self.last_msg > rospy.Duration(timeoutDelay)\
-                    and rospy.Time.now() - self.timeFinishList > rospy.Duration(timeoutDelay):
-                rospy.logwarn("QUIT")
-                rospy.signal_shutdown("Timeout, shutting down!")
-                return
+            # timeoutDelay = 300 # sec
+            # if rospy.Time.now() - self.last_msg > rospy.Duration(timeoutDelay)\
+            #         and rospy.Time.now() - self.timeFinishList > rospy.Duration(timeoutDelay):
+            #     rospy.logwarn("QUIT (time-out)")
+            #     rospy.signal_shutdown("Timeout, shutting down!")
+            #     return
 
 
 if __name__ == '__main__':
