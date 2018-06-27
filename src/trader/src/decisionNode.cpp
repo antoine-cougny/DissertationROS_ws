@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     hasTasks_pub = n.advertise<std_msgs::Bool>("hasTasks", 10);
     // Sending goal to the task exec
     ros::Publisher sendGoal_pub;
-    sendGoal_pub = n.advertise<trader::Task>("sendGoal", 10);
+    sendGoal_pub = n.advertise<trader::Task>("goalSender", 10);
     // Send a goal to be traded
     /* ros::Publisher taskToTrade_pub; */
     /* taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2); */
@@ -80,8 +80,10 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
+        // Before picking a task in the vector, there must be at least one
         if (vecTaskToDo.size())
         {
+            ROS_INFO("We have %d tasks stored", vecTaskToDo.size());
             // Select a task in the vector (uniform distribution)
             uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
             int index_selectedTask = distribution(generator);
@@ -106,6 +108,7 @@ int main(int argc, char **argv)
                     {
                         if (taskTrade_srv.response.auctionReady)
                         {
+                            ROS_INFO("traderNode accepted to launch an auction");
                             // Delete task from vector
                             vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
                         }
@@ -126,6 +129,8 @@ int main(int argc, char **argv)
                     // Do the task
                     ROS_INFO("Robot %d We will do the task", idRobot);
                     sendGoal_pub.publish(task_msg); 
+                    // Delete the task from the vector list
+                    vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
                 }
             }
             else
