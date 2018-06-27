@@ -43,7 +43,12 @@ vector<int> vecIdRobotSrv;
 ros::Publisher newTask_pub;
 
 int indexofSmallestElement(vector<int>& vec);
+void listeningSleep(ros::Rate loop_rate, int sleepDuration);
 
+/*
+ * Callback function used by the announcement topic
+ * We accept an auction is we have not triggered it.
+ */
 void announcement_cb(const trader::announcement &msg)
 {
     if (msg.idTask.compare(announceTask.idTask) != 0)
@@ -62,18 +67,16 @@ void announcement_cb(const trader::announcement &msg)
     }
 }
 
-/* void taskToTrade_cb(const trader::Task &msg) */
-/* { */
-/*     // Do stuff */
-/*     receivedTaskToTrade = msg; */
-/*     is_task_available_for_trading = true; */
-/* } */
-
+/*
+ * Callback function used by the servive linking the decisionNode and the
+ * traderNode. 
+ */
 bool taskToTrade_cb_srv(trader::taskToBeTraded::Request &req,
                         trader::taskToBeTraded::Response &res)
 {
     receivedTaskToTrade = req.task;
-    res.auctionReady.data = is_robot_available_for_trading;
+    // If the robot is already in an auction we send this back to the node
+    res.auctionReady = is_robot_available_for_trading;
     is_task_available_for_trading = is_robot_available_for_trading;
 
     return true;
@@ -89,16 +92,21 @@ void hasTasks_cb(const std_msgs::Bool &msg)
     hasTasks = msg.data;
 }
 
-void bidTrade_cb(const trader::bid &msg)
-{
-    if (msg.idTask.compare(announceTask.idTask) == 0)
-    {
-        // The received bid is about the task we announced
-        vecBid.push_back(msg.bid);
-        vecIdRobotSrv.push_back(msg.idRobot);
-    }
-}
+/* void bidTrade_cb(const trader::bid &msg) */
+/* { */
+/*     if (msg.idTask.compare(announceTask.idTask) == 0) */
+/*     { */
+/*         // The received bid is about the task we announced */
+/*         vecBid.push_back(msg.bid); */
+/*         vecIdRobotSrv.push_back(msg.idRobot); */
+/*     } */
+/* } */
 
+/*
+ * Callback function used when a trader wants to bid on a task proposed by the
+ * trader leader. If the bid is accepted, ie, the bid corresponds to a task that
+ * has been open on this service, the response is a true boolean.
+ */
 bool bidTrade_cb_srv(trader::bid_srv::Request  &req,
                      trader::bid_srv::Response &res)
 {
@@ -115,6 +123,10 @@ bool bidTrade_cb_srv(trader::bid_srv::Request  &req,
     return true;
 }
 
+/*
+ * This callback function is used to let auctionners if they won or not the
+ * auction they participated in.
+ */
 bool biddingStatus_cb(trader::auctionWinner::Request  &req,
                       trader::auctionWinner::Response &res)
 {
@@ -127,8 +139,10 @@ bool biddingStatus_cb(trader::auctionWinner::Request  &req,
         newTask_pub.publish(receivedTaskToSave.task);
     }
     else
+    {
         ROS_INFO("Robot %d lost the auction", idRobot);
         res.pk = "";
+    }
 
 
     return true;
@@ -144,7 +158,7 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
 
     ns = ros::this_node::getNamespace();
-    ns = ns.substr(1, ns.size() - 1);
+    ns = ns.substr(1, ns.size() - 1); // Delete an extra / at the beginning
 
     // Announcement Messages
     ros::Publisher  announcement_pub;
@@ -222,7 +236,7 @@ int main(int argc, char **argv)
                 int indexWinner = indexofSmallestElement(vecBid);
                 
                 // We tell the winner his victory
-                ROS_INFO("Tell the winner the auction has ended");
+                ROS_INFO("Tell the winner the auction ended");
                 ROS_INFO("The winner is robot id %d", vecIdRobotSrv[indexWinner]);
                 ROS_WARN("Contacting the winner with the service %s", 
                     ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[indexWinner])).c_str());
@@ -249,11 +263,13 @@ int main(int argc, char **argv)
                         looserSrv.request.isWinner = false;
                         ros::ServiceClient looserSrvClient = n.serviceClient
                             <trader::auctionWinner>
-                            (announceTask.idTask + "" + to_string(vecIdRobotSrv[i]));
+                            ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[i]));
+                        ROS_INFO("Contacting looser on %s",
+                            ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[i])).c_str());
                         if (looserSrvClient.call(looserSrv))
-                            ROS_INFO("Contacted looser");
+                            ROS_INFO("Contacted looser %d", vecIdRobotSrv[i]);
                         else
-                            ROS_ERROR("Failed to contact looser");
+                            ROS_ERROR("Failed to contact looser %d", vecIdRobotSrv[i]);
                     }
                 }
             }
@@ -358,4 +374,14 @@ int indexofSmallestElement(vector<int>& vec)
     }
 
     return index;
+}
+
+void listeningSleep(ros::Rate loop_rate, int sleepDuration)
+{
+    ros::Time start_waiting = ros::Time::now();
+    while (ros::Time::now() - start_waiting < ros::Duration(sleepDuration))
+    {
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 }
