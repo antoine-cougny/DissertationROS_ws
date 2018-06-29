@@ -2,10 +2,11 @@
     <group ns="computer">
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metricsPC" pkg="trader" type="trader_metricsPC" />
+        <node name="bc_handler_PC" pkg="blockchain_handler" type="bc_handler" />
         <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
 
         <param name="acceptanceThresold" type="int" value="0" />
-        <param name="robotPK" value="yyy"/>
+        <param name="robotPK" value="yyyC"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="0" />
     </group>
@@ -14,6 +15,7 @@
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
         
         <!-- <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0]</rosparam>
@@ -21,7 +23,7 @@
         </node>-->
 
         <param name="acceptanceThresold" type="int" value="1" />
-        <param name="robotPK" value="yyy"/>
+        <param name="robotPK" value="yyy1"/>
         <param name="tradingThreshold" value="10" />
         <param name="idRobot" type="int" value="1" />   
     </group>
@@ -30,6 +32,7 @@
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
        <!-- <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
@@ -37,7 +40,7 @@
         </node>-->
 
         <param name="acceptanceThresold" type="int" value="1" />
-        <param name="robotPK" value="yyy"/>
+        <param name="robotPK" value="yyy2"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="2" />
     </group>
@@ -47,6 +50,7 @@
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
         
         <!-- <node name="taskExec" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0,2,0.5,0,1.5,-0.5,0]</rosparam>
@@ -54,7 +58,7 @@
         </node>-->
 
         <param name="acceptanceThresold" type="int" value="1" />
-        <param name="robotPK" value="yyy"/>
+        <param name="robotPK" value="yyy3"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="3" />
     </group>
