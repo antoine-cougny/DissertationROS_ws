@@ -1,0 +1,5 @@
+string idTask
+string idSeller
+string idBuyer
+---
+bool status
