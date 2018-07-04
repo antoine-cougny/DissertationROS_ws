@@ -51,11 +51,11 @@
             <rosparam param="yea_seq">[0]</rosparam>
         </node>
         <param name="acceptanceThreshold" type="int" value="10" />
-        <param name="robotPK" value="yyy"/>
+        <param name="robotPK" value="yyy2"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="2" />
-
     </group>
+
     <include file="$(find multirobot)/launch/one_robot.launch" >
         <arg name="init_pose_x" value="1" />
         <arg name="init_pose_y" value="2"/>
@@ -65,9 +65,22 @@
 
     
     <!-- BEGIN ROBOT 3 -->
-    <!--
+
     <group ns="robot3">
         <param name="tf_prefix" value="robot3_tf" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[1.5,0.5,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="10" />
+        <param name="robotPK" value="yyy3"/>
+        <param name="tradingThreshold" type="int" value="10" />
+        <param name="idRobot" type="int" value="3" />
     </group>
     <include file="$(find multirobot)/launch/one_robot.launch" >
       <arg name="init_pose_x" value="1" />
@@ -75,5 +88,5 @@
       <arg name="init_pose_a" value="3.14"/>
       <arg name="robot_name"  value="robot3" />
     </include>
-    -->
+
 </launch>
