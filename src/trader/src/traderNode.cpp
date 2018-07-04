@@ -17,6 +17,7 @@
 #include "trader/auctionWinner.h"
 #include "trader/taskToBeTraded.h"
 #include "trader/bid_srv.h"
+#include "blockchain_handler/transactionBC.h"
 // Task class
 #include "task.h"
 
@@ -69,7 +70,7 @@ void announcement_cb(const trader::announcement &msg)
 
 /*
  * Callback function used by the servive linking the decisionNode and the
- * traderNode. 
+ * traderNode to open an auction on the given task. 
  */
 bool taskToTrade_cb_srv(trader::taskToBeTraded::Request &req,
                         trader::taskToBeTraded::Response &res)
@@ -199,10 +200,10 @@ int main(int argc, char **argv)
             is_robot_available_for_trading = false;
 
             // Announcement message
-            announceTask.idTask = receivedTaskToTrade.id;//to_string(ros::Time::now().sec); // TODO: use pk of blockchain
+            announceTask.idTask = receivedTaskToTrade.id + "_" + to_string(ros::Time::now().sec); // TODO: use pk of blockchain. TODO: task id is task pk instead?
             announceTask.idRobot = idRobot;
             announceTask.task = receivedTaskToTrade;
-            announceTask.topic = ns + "" + announceTask.idTask;
+            announceTask.topic = ns + "_" + announceTask.idTask;
             ROS_WARN("Name of service to bid: %s ", announceTask.topic.c_str());
 
             // Create topic on the fly and Publish annoucement message
@@ -239,19 +240,35 @@ int main(int argc, char **argv)
                 ROS_INFO("Tell the winner the auction ended");
                 ROS_INFO("The winner is robot id %d", vecIdRobotSrv[indexWinner]);
                 ROS_WARN("Contacting the winner with the service %s", 
-                    ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[indexWinner])).c_str());
+                    ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[indexWinner])).c_str());
                 trader::auctionWinner winnerSrv;
                 winnerSrv.request.isWinner = true;
                 ros::ServiceClient winnerSrvClient;
                 winnerSrvClient = n.serviceClient<trader::auctionWinner>
-                    ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[indexWinner]));
+                    ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[indexWinner]));
                 if (winnerSrvClient.call(winnerSrv))
+                {
                     ROS_INFO("Winner is aware");
+
+                    // We send a signal to the blockchainNode
+                    ROS_INFO("Sending a msg to blockchainNode");
+                    ros::ServiceClient sendTransaction_srvC;
+                    sendTransaction_srvC = n.serviceClient
+                        <blockchain_handler::transactionBC>("transactionBC");
+                    // Service message
+                    blockchain_handler::transactionBC bc_srv;
+                    bc_srv.request.idTask = announceTask.task.id;
+                    bc_srv.request.idSeller = robotPK;
+                    bc_srv.request.idBuyer = winnerSrv.response.pk;
+                    bc_srv.request.price = vecBid[indexWinner];
+                    // Send Messsage
+                    if(sendTransaction_srvC.call(bc_srv))
+                        ROS_INFO("Transaction initiated");
+                    else
+                        ROS_ERROR("Could not contact blockchainNode");
+                }
                 else
                     ROS_ERROR("Failed to contact winner");
-
-                // We send a signal to the blockchainNode
-                // TODO
 
                 // We tell the others that they lost
                 ROS_INFO("Tell the other robots they lost");
@@ -263,9 +280,9 @@ int main(int argc, char **argv)
                         looserSrv.request.isWinner = false;
                         ros::ServiceClient looserSrvClient = n.serviceClient
                             <trader::auctionWinner>
-                            ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[i]));
+                            ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[i]));
                         ROS_INFO("Contacting looser on %s",
-                            ("/" + announceTask.idTask + "" + to_string(vecIdRobotSrv[i])).c_str());
+                            ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[i])).c_str());
                         if (looserSrvClient.call(looserSrv))
                             ROS_INFO("Contacted looser %d", vecIdRobotSrv[i]);
                         else
@@ -323,9 +340,9 @@ int main(int argc, char **argv)
                     // Create service server before sending bid the handle
                     // the result of the auction
                     ROS_WARN("Name of the service to announce the result: %s",
-                        ("/" + receivedTaskToSave.idTask + "" + to_string(idRobot)).c_str());
+                        ("/" + receivedTaskToSave.idTask + "_" + to_string(idRobot)).c_str());
                     ros::ServiceServer biddingSrvServer = n.advertiseService
-                        ("/" + receivedTaskToSave.idTask + "" + to_string(idRobot), biddingStatus_cb);
+                        ("/" + receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
 
                     // Sending
                     if (customSrv_bid_srvC.call(bid_msg))
