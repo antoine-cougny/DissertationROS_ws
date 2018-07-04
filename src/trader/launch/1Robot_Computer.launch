@@ -2,7 +2,7 @@
     <group ns="computer">
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metricsPC" pkg="trader" type="trader_metricsPC" />
-        <!--<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>-->
+        <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
 
         <param name="acceptanceThresold" type="int" value="0" />
         <param name="robotPK" value="yyy"/>
@@ -13,11 +13,12 @@
         <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch"/>
         <include file="$(find simple_navigation_goals)/launch/turtlebot3_navigation.launch"/>
         <include file="$(find simple_navigation_goals)/launch/turtlebot3_gazebo_rviz.launch"/>
-        
+
 
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
         
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0]</rosparam>
