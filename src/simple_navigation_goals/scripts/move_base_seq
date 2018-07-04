@@ -27,7 +27,11 @@ class MoveBaseSeq():
         points_seq = rospy.get_param('move_base_seq/p_seq', '[0,0,0]')
         # Only yaw angle required (no ratotions around x and y axes) in deg:
         yaweulerangles_seq = rospy.get_param('move_base_seq/yea_seq')
-
+        
+        try:
+            self.map_goal_prefix = rospy.get_param('tf_prefix') + "/"
+        except:
+            self.map_goal_prefix = ""
 
         #List of goal quaternions:
         quat_seq = list()
@@ -93,7 +97,7 @@ class MoveBaseSeq():
 
     def feedback_cb(self, feedback):
         #rospy.loginfo("Feedback for goal "+str(self.goal_cnt)+": "+str(feedback))
-        rospy.loginfo("Feedback for goal pose "+str(self.goal_cnt+1)+" received")
+        rospy.logdebug("Feedback for goal pose "+str(self.goal_cnt+1)+" received")
 
     def done_cb(self, status, result):
         self.goalReached = True
@@ -128,7 +132,7 @@ class MoveBaseSeq():
         """
         # Prepare Message
         goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.frame_id = self.map_goal_prefix + "map"
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = nextPose
         # Log
