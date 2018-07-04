@@ -5,7 +5,7 @@
         <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
         <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
-        <param name="acceptanceThresold" type="int" value="0" />
+        <param name="acceptanceThreshold" type="int" value="0" />
         <param name="robotPK" value="yyy0"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="0" />
@@ -31,7 +31,7 @@
             [90,0,180]
         -->
 
-        <param name="acceptanceThresold" type="int" value="1" />
+        <param name="acceptanceThreshold" type="int" value="1" />
         <param name="robotPK" value="yyy1"/>
         <param name="tradingThreshold" value="10" />
         <param name="idRobot" type="int" value="1" />

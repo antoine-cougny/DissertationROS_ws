@@ -40,7 +40,6 @@ Author name: Emre Can Bulut
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
                 <param name="publish_frequency" type="double" value="30.0" />
         </node>
-
     </group>
       
       <!-- Move base here! -->  
@@ -60,13 +59,13 @@ Author name: Emre Can Bulut
         
     <!-- The odometry estimator, throttling, fake laser etc. go here -->
     <!-- All the stuff as from usual robot launch file -->
-        <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" ns="$(arg robot_name)" args="manager"/>
-        <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan" ns="$(arg robot_name)"
-                args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager">
-            <param name="scan_height" value="10"/>
-            <param name="output_frame_id" value="$(arg robot_name)_tf/camera_depth_frame"/>
-            <param name="range_min" value="0.45"/>
-            <remap from="image" to="camera/depth/image_raw"/>
-            <remap from="scan" to="scan"/>
-        </node>
+    <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" ns="$(arg robot_name)" args="manager"/>
+    <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan" ns="$(arg robot_name)"
+            args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager">
+        <param name="scan_height" value="10"/>
+        <param name="output_frame_id" value="$(arg robot_name)_tf/camera_depth_frame"/>
+        <param name="range_min" value="0.45"/>
+        <remap from="image" to="camera/depth/image_raw"/>
+        <remap from="scan" to="scan"/>
+    </node>
 </launch>
