@@ -140,7 +140,7 @@ class MoveBaseSeq():
         rospy.loginfo(str(self.pose_seq[self.goal_cnt]))
         # Send message
         self.client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
-        rospy.logerr("sent!")
+        rospy.loginfo("Sent!")
         # rospy.spin()
         return
 
@@ -171,7 +171,7 @@ class MoveBaseSeq():
                 # Wait for callback of goal being reached
                 while not self.goalReached:
                     rospy.sleep(0.5)
-                    rospy.loginfo("Small wait")
+                    rospy.logdebug("Small wait")
 
                 # Goal achieved, perform a task
                 task = 0 # for now
