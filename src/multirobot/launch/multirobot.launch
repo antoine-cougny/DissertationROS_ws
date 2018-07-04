@@ -12,7 +12,7 @@
     
     <group ns="robot1">
         <param name="tf_prefix" value="robot1_tf" />
-        <!--
+        
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
@@ -24,7 +24,7 @@
         <param name="robotPK" value="yyy"/>
         <param name="tradingThreshold" value="10" />
         <param name="idRobot" type="int" value="1" /> 
-        -->
+        
     </group>
     <include file="$(find multirobot)/launch/one_robot.launch" >
         <arg name="init_pose_x" value="1" />
