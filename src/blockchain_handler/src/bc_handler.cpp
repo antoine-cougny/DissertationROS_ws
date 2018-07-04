@@ -20,7 +20,6 @@ string robotPK;
 
 bool transactionAvailable = false;
 blockchain_handler::transactionBC transaction_msg;
-string idTask, idSeller, idBuyer;
 
 bool sendTransaction_bc(blockchain_handler::transactionBC::Request  &req,
                         blockchain_handler::transactionBC::Response &res)
@@ -29,11 +28,7 @@ bool sendTransaction_bc(blockchain_handler::transactionBC::Request  &req,
     if (!transactionAvailable)
     {
         res.status = true;
-        idTask = req.idTask;
-        idSeller = req.idSeller;
-        idBuyer = req.idBuyer;
         transactionAvailable = true;
-        // Redundancy
         transaction_msg.request = req;
     }
     return true;
