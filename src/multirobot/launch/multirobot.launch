@@ -16,12 +16,14 @@
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
             <rosparam param="p_seq">[0.2,0.5,0]</rosparam>
             <rosparam param="yea_seq">[90]</rosparam>
         </node>
-        <param name="acceptanceThresold" type="int" value="1" />
-        <param name="robotPK" value="yyy"/>
+        <param name="acceptanceThresold" type="int" value="10" />
+        <param name="robotPK" value="yyy1"/>
         <param name="tradingThreshold" value="10" />
         <param name="idRobot" type="int" value="1" /> 
         
@@ -36,18 +38,19 @@
  
     
     <!-- BEGIN ROBOT 2 -->
-    <!--
     <group ns="robot2">
         <param name="tf_prefix" value="robot2_tf" />
 
         <node name="trader" pkg="trader" type="trader_trader" />
         <node name="metrics" pkg="trader" type="trader_metrics" />
         <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
-            <rosparam param="p_seq">[2,0.5,0,1.5,-0.5,0]</rosparam>
-            <rosparam param="yea_seq">[0,180]</rosparam>
+            <rosparam param="p_seq">[2,0.5,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
         </node>
-        <param name="acceptanceThresold" type="int" value="1" />
+        <param name="acceptanceThresold" type="int" value="10" />
         <param name="robotPK" value="yyy"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="2" />
@@ -58,7 +61,7 @@
         <arg name="init_pose_y" value="2"/>
         <arg name="init_pose_a" value="3.14"/>
         <arg name="robot_name"  value="robot2" />
-    </include>-->
+    </include>
 
     
     <!-- BEGIN ROBOT 3 -->
