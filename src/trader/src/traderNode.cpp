@@ -260,6 +260,7 @@ int main(int argc, char **argv)
                     bc_srv.request.idTask = announceTask.task.id;
                     bc_srv.request.idSeller = robotPK;
                     bc_srv.request.idBuyer = winnerSrv.response.pk;
+                    bc_srv.request.price = vecBid[indexWinner];
                     // Send Messsage
                     if(sendTransaction_srvC.call(bc_srv))
                         ROS_INFO("Transaction initiated");
