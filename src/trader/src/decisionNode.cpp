@@ -83,7 +83,7 @@ int main(int argc, char **argv)
         // Before picking a task in the vector, there must be at least one
         if (vecTaskToDo.size())
         {
-            ROS_INFO("We have %d tasks stored", vecTaskToDo.size());
+            ROS_INFO("We have %d tasks stored", (int) vecTaskToDo.size());
             // Select a task in the vector (uniform distribution)
             uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
             int index_selectedTask = distribution(generator);

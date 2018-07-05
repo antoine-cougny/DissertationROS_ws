@@ -228,7 +228,7 @@ int main(int argc, char **argv)
             }
 
             // We make sure we got at least one bid
-            ROS_INFO("We got %d bid(s)", vecIdRobotSrv.size());
+            ROS_INFO("We got %d bid(s)", (int) vecIdRobotSrv.size());
             if (vecIdRobotSrv.size())
             {
                 // We will select the winner and a service message to him
