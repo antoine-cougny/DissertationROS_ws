@@ -11,19 +11,16 @@
 
 #include <iostream>
 using namespace std;
-//Action Feedback and Result
-/* typedef boost::shared_ptr< ::move_base_msgs::MoveBaseActionFeedback const > MoveBaseActionFeedbackConstPtr; */
 
 geometry_msgs::Pose myPose;
 
 void position_cb(const move_base_msgs::MoveBaseActionFeedback &msg)
 {
-    /* extern geometry_msgs::Pose myPos; */
     myPose = msg.feedback.base_position.pose;
 }
 
 /*
- * Return the cartesian distance between the current position and the given
+ * Returns the cartesian distance between the current position and the given
  * target.
  *  ! I am aware that a path may be longer but at the scale of our implementation
  *  this will be enough
@@ -41,7 +38,7 @@ float calcMovingCost(geometry_msgs::Pose currentPose,
     /*             currentPose.position.x, */ 
     /*             currentPose.position.y, */ 
     /*             currentPose.position.z      ); */
-    /* ROS_INFO("Target Positon: ", targetPose.position); */
+
     /* ROS_INFO("Target Position: %f, %f, %f", */ 
     /*             targetPose.position.x, */
     /*             targetPose.position.y, */
@@ -52,7 +49,7 @@ float calcMovingCost(geometry_msgs::Pose currentPose,
 bool metricsCalc_cb(trader::metrics::Request &Task, trader::metrics::Response &metrics)
 {
     /* ROS_INFO("Got new position"); */
-    metrics.cost = calcMovingCost(myPose, Task.task.goalPosition_p);
+    metrics.cost = 10*calcMovingCost(myPose, Task.task.goalPosition_p);
     ROS_INFO("Cost: %.3f", metrics.cost);
     return true;
 }
@@ -63,7 +60,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "metricsNode");
     ros::NodeHandle n;
 
-    /* geometry_msgs::Pose myPos; */
     // Topic used by the global planner of the Navigation Stack
     ros::Subscriber position_sub = n.subscribe("move_base/feedback", 1000, position_cb);
 
@@ -74,7 +70,6 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-
         // End of loop, wait, check the queues
         ros::spinOnce();
         loop_rate.sleep();
