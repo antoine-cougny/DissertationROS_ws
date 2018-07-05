@@ -37,13 +37,13 @@ trader::announcement receivedTaskToSave;
 trader::announcement announceTask;
 
 // When we get a bid
-vector<int> vecBid;
+vector<double> vecBid;
 vector<int> vecIdRobotSrv;
 
 // When we won an auction
 ros::Publisher newTask_pub;
 
-int indexOfBiggestElement(vector<int>& vec);
+int indexOfBiggestElement(vector<double>& vec);
 void listeningSleep(ros::Rate loop_rate, int sleepDuration);
 
 /*
@@ -52,7 +52,7 @@ void listeningSleep(ros::Rate loop_rate, int sleepDuration);
  */
 void announcement_cb(const trader::announcement &msg)
 {
-    if (msg.idTask.compare(announceTask.idTask) != 0)
+    if (msg.idTask.compare(announceTask.idTask) != 0 && isIdle)
     {
         ROS_INFO("Accepted incomming task for trading");
         receivedTaskToSave = msg;
@@ -64,7 +64,7 @@ void announcement_cb(const trader::announcement &msg)
         // !!! Not safe if 2 auctions at the same time.
         // !!! TODO: verif on ID but will be implemented later by using the PK
         //           of the token on the blockchain to id it.
-        ROS_INFO("Task rejected because we launched it");
+        ROS_INFO("Task rejected because we launched it or because we are busy");
     }
 }
 
@@ -92,16 +92,6 @@ void hasTasks_cb(const std_msgs::Bool &msg)
 {
     hasTasks = msg.data;
 }
-
-/* void bidTrade_cb(const trader::bid &msg) */
-/* { */
-/*     if (msg.idTask.compare(announceTask.idTask) == 0) */
-/*     { */
-/*         // The received bid is about the task we announced */
-/*         vecBid.push_back(msg.bid); */
-/*         vecIdRobotSrv.push_back(msg.idRobot); */
-/*     } */
-/* } */
 
 /*
  * Callback function used when a trader wants to bid on a task proposed by the
@@ -144,7 +134,10 @@ bool biddingStatus_cb(trader::auctionWinner::Request  &req,
         ROS_INFO("Robot %d lost the auction", idRobot);
         res.pk = "";
     }
-
+    
+    // Clear Variables
+    is_robot_available_for_trading = true;
+    external_auction_available = false;
 
     return true;
 }
@@ -164,7 +157,7 @@ int main(int argc, char **argv)
     // Announcement Messages
     ros::Publisher  announcement_pub;
     ros::Subscriber announcement_sub;
-    announcement_pub = n.advertise<trader::announcement>("/announcementGlobal", 1);
+    announcement_pub = n.advertise<trader::announcement>("/announcementGlobal", 50);
     announcement_sub = n.subscribe("/announcementGlobal", 1, announcement_cb);
 
     // Getting robot state from decisionNode and taskExec
@@ -200,7 +193,7 @@ int main(int argc, char **argv)
             is_robot_available_for_trading = false;
 
             // Announcement message
-            announceTask.idTask = receivedTaskToTrade.id + "_" + to_string(ros::Time::now().sec); // TODO: use pk of blockchain. TODO: task id is task pk instead?
+            announceTask.idTask = receivedTaskToTrade.id;// + "_" + to_string(ros::Time::now().sec); // TODO: use pk of blockchain. TODO: task id is task pk instead?
             announceTask.idRobot = idRobot;
             announceTask.task = receivedTaskToTrade;
             announceTask.topic = ns + "_" + announceTask.idTask;
@@ -238,7 +231,7 @@ int main(int argc, char **argv)
                 
                 // We tell the winner his victory
                 ROS_INFO("Tell the winner the auction ended");
-                ROS_INFO("The winner is robot id %d", vecIdRobotSrv[indexWinner]);
+                ROS_INFO("The winner is robot id %d with the bid %.3f", vecIdRobotSrv[indexWinner], vecBid[indexWinner]);
                 ROS_WARN("Contacting the winner with the service %s", 
                     ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[indexWinner])).c_str());
                 trader::auctionWinner winnerSrv;
@@ -321,12 +314,11 @@ int main(int argc, char **argv)
                 ROS_INFO("Potential benefit of the task: %.3f", benefit);
                 if (benefit > acceptanceThreshold)
                 {
-                    ROS_INFO("Robot %d is bidding", idRobot);
+                    ROS_INFO("Robot %d is bidding on task %s", idRobot, receivedTaskToSave.idTask.c_str());
                     // SERVICE VERSION
                     // We decide to bid on the task
                     
                     ROS_INFO("Creation of the service server to get answer from the trader leader");
-                    ROS_WARN("Name of the service we bid on: %s ",receivedTaskToSave.topic.c_str());
                     ros::ServiceClient customSrv_bid_srvC;
                     customSrv_bid_srvC = n.serviceClient<trader::bid_srv>
                             (receivedTaskToSave.topic);
@@ -346,10 +338,11 @@ int main(int argc, char **argv)
                         ("/" + receivedTaskToSave.idTask + "_" + to_string(idRobot), biddingStatus_cb);
 
                     // Sending
+                    ROS_WARN("Name of the service we bid on: %s ",receivedTaskToSave.topic.c_str());
                     if (customSrv_bid_srvC.call(bid_msg))
-                        ROS_INFO("Called bidding service with the bid %.3f", (double) bid_msg.request.bid);
+                        ROS_INFO("Called bidding service with the bid %.3f for the task %s", (double) bid_msg.request.bid, receivedTaskToSave.idTask.c_str());
                     else
-                        ROS_ERROR("Robot %d Failed to submit bid", idRobot);
+                        ROS_ERROR("Robot %d Failed to submit bid on task %s", idRobot, receivedTaskToSave.idTask.c_str());
                     
 
                     // Wait for answer - THIS IS DONE WITH THE CALLBACK FCT
@@ -362,14 +355,14 @@ int main(int argc, char **argv)
                     }
                 }
                 else
-                    ROS_INFO("Robot %d We do not bid on this task", idRobot);
+                    ROS_INFO("Robot %d We do not bid on task %s", idRobot, receivedTaskToSave.idTask.c_str());
             }
             else
                 ROS_ERROR("Robot %d Failed to call service metricsNode", idRobot);
 
             // Clear Variables
-            is_robot_available_for_trading = true;
-            external_auction_available = false;
+            //is_robot_available_for_trading = true;
+            //external_auction_available = false;
             ROS_INFO("Auction DONE for trader");
         }
 
@@ -381,7 +374,7 @@ int main(int argc, char **argv)
 }
 
 
-int indexOfBiggestElement(vector<int>& vec)
+int indexOfBiggestElement(vector<double>& vec)
 {
     int index = 0;
 
