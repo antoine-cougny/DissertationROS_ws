@@ -22,9 +22,9 @@
             <rosparam param="p_seq">[0.2,0.5,0]</rosparam>
             <rosparam param="yea_seq">[90]</rosparam>
         </node>
-        <param name="acceptanceThreshold" type="int" value="10" />
+        <param name="acceptanceThreshold" type="int" value="1" />
         <param name="robotPK" value="yyy1"/>
-        <param name="tradingThreshold" value="10" />
+        <param name="tradingThreshold" value="1" />
         <param name="idRobot" type="int" value="1" /> 
         
     </group>
@@ -47,12 +47,12 @@
         <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
-            <rosparam param="p_seq">[2,0.5,0]</rosparam>
+            <rosparam param="p_seq">[1,0.5,0]</rosparam>
             <rosparam param="yea_seq">[0]</rosparam>
         </node>
-        <param name="acceptanceThreshold" type="int" value="10" />
+        <param name="acceptanceThreshold" type="int" value="1" />
         <param name="robotPK" value="yyy2"/>
-        <param name="tradingThreshold" type="int" value="10" />
+        <param name="tradingThreshold" type="int" value="1" />
         <param name="idRobot" type="int" value="2" />
     </group>
 
@@ -74,12 +74,12 @@
         <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
         <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
-            <rosparam param="p_seq">[1.5,0.5,0]</rosparam>
+            <rosparam param="p_seq">[2,0.5,0]</rosparam>
             <rosparam param="yea_seq">[0]</rosparam>
         </node>
-        <param name="acceptanceThreshold" type="int" value="10" />
+        <param name="acceptanceThreshold" type="int" value="1" />
         <param name="robotPK" value="yyy3"/>
-        <param name="tradingThreshold" type="int" value="10" />
+        <param name="tradingThreshold" type="int" value="1" />
         <param name="idRobot" type="int" value="3" />
     </group>
     <include file="$(find multirobot)/launch/one_robot.launch" >
