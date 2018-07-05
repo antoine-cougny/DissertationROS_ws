@@ -43,7 +43,7 @@ vector<int> vecIdRobotSrv;
 // When we won an auction
 ros::Publisher newTask_pub;
 
-int indexofSmallestElement(vector<int>& vec);
+int indexOfBiggestElement(vector<int>& vec);
 void listeningSleep(ros::Rate loop_rate, int sleepDuration);
 
 /*
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
                 // We will select the winner and a service message to him
                 // The others will get a no
                 // TODO: what is the smallest cost is bigger than our cost?
-                int indexWinner = indexofSmallestElement(vecBid);
+                int indexWinner = indexOfBiggestElement(vecBid);
                 
                 // We tell the winner his victory
                 ROS_INFO("Tell the winner the auction ended");
@@ -317,8 +317,9 @@ int main(int argc, char **argv)
             metric_srv.request.task = receivedTaskToSave.task; 
             if (metrics_srvC.call(metric_srv))
             {
-                ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
-                if (metric_srv.response.cost < acceptanceThreshold)
+                float benefit = receivedTaskToSave.task.reward - metric_srv.response.cost;
+                ROS_INFO("Potential benefit of the task: %.3f", benefit);
+                if (benefit > acceptanceThreshold)
                 {
                     ROS_INFO("Robot %d is bidding", idRobot);
                     // SERVICE VERSION
@@ -335,7 +336,7 @@ int main(int argc, char **argv)
                     trader::bid_srv bid_msg;
                     bid_msg.request.idTask = receivedTaskToSave.idTask;
                     bid_msg.request.idRobot = idRobot;
-                    bid_msg.request.bid = metric_srv.response.cost;
+                    bid_msg.request.bid = benefit;
 
                     // Create service server before sending bid the handle
                     // the result of the auction
@@ -380,13 +381,13 @@ int main(int argc, char **argv)
 }
 
 
-int indexofSmallestElement(vector<int>& vec)
+int indexOfBiggestElement(vector<int>& vec)
 {
     int index = 0;
 
     for(int i = 1; i < vec.size(); i++)
     {
-        if(vec[i] < vec[index])
+        if(vec[i] > vec[index])
             index = i;              
     }
 

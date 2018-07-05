@@ -1,6 +1,6 @@
 string idTask
 string idSeller
 string idBuyer
-float64 price
+float32 price
 ---
 bool status
