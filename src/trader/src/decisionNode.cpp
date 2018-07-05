@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     /* ros::Publisher taskToTrade_pub; */
     /* taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2); */
     ros::ServiceClient taskToTrade_srvC;
-    taskToTrade_srvC = n.serviceClient<trader::taskToBeTraded>("taskToBeTraded");
+    taskToTrade_srvC = n.serviceClient<trader::taskToBeTraded>("taskToTrade");
 
     // Getting a new task from traderNode (to be stored)
     ros::Subscriber newTask_sub = n.subscribe("newTask", 2, newTask_cb);
@@ -94,8 +94,17 @@ int main(int argc, char **argv)
             metric_srv.request.task = task_msg; 
             if (metrics_srvC.call(metric_srv))
             {
-                ROS_INFO("Cost of the task: %.3f", metric_srv.response.cost);
-                if (metric_srv.response.cost > tradingThreshold)
+                float benefit = task_msg.reward - metric_srv.response.cost;
+                ROS_INFO("Potential benefit of the task: %.3f", benefit);
+                if (benefit > tradingThreshold)
+                {
+                    // Do the task
+                    ROS_INFO("Robot %d We will do the task", idRobot);
+                    sendGoal_pub.publish(task_msg);
+                    // Delete the task from the vector list
+                    vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
+                }
+                else
                 {
                     // Send task to trader
                     ROS_INFO("Task too expensive, will be sent to traderNode");
@@ -120,23 +129,11 @@ int main(int argc, char **argv)
                         }
                     }
                     else
-                    {
                         ROS_ERROR("Robot %d Failed service call for task to traderNode", idRobot);
-                    }
-                }
-                else
-                {
-                    // Do the task
-                    ROS_INFO("Robot %d We will do the task", idRobot);
-                    sendGoal_pub.publish(task_msg); 
-                    // Delete the task from the vector list
-                    vecTaskToDo.erase(vecTaskToDo.begin() + index_selectedTask);
                 }
             }
             else
-            {
                 ROS_ERROR("Robot %d Failed to call service metricsNode", idRobot);
-            }
         }
 
         // Send status of task
