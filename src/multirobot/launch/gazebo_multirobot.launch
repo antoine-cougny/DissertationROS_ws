@@ -35,6 +35,8 @@ Author name: Emre Can Bulut
   
   <!-- start rviz -->
   <include file="$(find multirobot)/launch/view_navigation.launch"/>
-    
+
+  <!-- Other packages -->
+  <!-- <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph"/> -->
   
 </launch>
