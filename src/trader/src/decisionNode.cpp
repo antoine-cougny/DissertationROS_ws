@@ -18,6 +18,7 @@
 
 using namespace std;
 
+bool isIdle = true;
 int idRobot = 1000;
 string ns;
 vector<trader::Task> vecTaskToDo;
@@ -31,6 +32,11 @@ vector<trader::Task> vecTaskToDo;
  * If the task list is empty, the node will advertise the robot as idle
  *
  ******************************************************************************/
+
+void isIdle_cb(const std_msgs::Bool &msg)
+{
+    isIdle = msg.data;
+}
 
 void newTask_cb(const trader::Task &msg)
 {
@@ -49,14 +55,15 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
 
     // Advertise it there are tasks saved
+    std_msgs::Bool hasTasks_status;
     ros::Publisher hasTasks_pub;
     hasTasks_pub = n.advertise<std_msgs::Bool>("hasTasks", 10);
+    // Getting robot state from taskExec
+    ros::Subscriber isIdle_sub = n.subscribe("isIdle", 10, isIdle_cb);
     // Sending goal to the task exec
     ros::Publisher sendGoal_pub;
     sendGoal_pub = n.advertise<trader::Task>("goalSender", 10);
-    // Send a goal to be traded
-    /* ros::Publisher taskToTrade_pub; */
-    /* taskToTrade_pub = n.advertise<trader::Task>("taskToTrade", 2); */
+    // Send a goal to be traded to the traderNode
     ros::ServiceClient taskToTrade_srvC;
     taskToTrade_srvC = n.serviceClient<trader::taskToBeTraded>("taskToTrade");
 
@@ -73,18 +80,21 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
     n.param<int>("tradingThreshold", tradingThreshold, 2);
 
-    std_msgs::Bool hasTasks_status;
-
     // Random pick a task
     default_random_engine generator;
 
     while (ros::ok())
     {
         // Before picking a task in the vector, there must be at least one
-        if (vecTaskToDo.size())
+        // Although the taskexec can handle a set of task in its own queue,
+        // we do not want to send a new one while it is busy.
+        // Note that a task could be decomposed as a set of goal which would
+        // be handled in this node.
+        if (vecTaskToDo.size() && isIdle)
         {
             ROS_INFO("We have %d tasks stored", (int) vecTaskToDo.size());
             // Select a task in the vector (uniform distribution)
+            // TODO: check if (random) does not come from here
             uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
             int index_selectedTask = distribution(generator);
             task_msg = vecTaskToDo[index_selectedTask];
@@ -96,6 +106,7 @@ int main(int argc, char **argv)
             {
                 float benefit = task_msg.reward - metric_srv.response.cost;
                 ROS_INFO("Potential benefit of the task: %.3f", benefit);
+                // If the task is still interesting to do
                 if (benefit > tradingThreshold)
                 {
                     // Do the task
@@ -108,7 +119,6 @@ int main(int argc, char **argv)
                 {
                     // Send task to trader
                     ROS_INFO("Task too expensive, will be sent to traderNode");
-                    /* taskToTrade_pub.publish(task_msg); */
 
                     // We use a service to have a feedback on the status of traderNode
                     trader::taskToBeTraded taskTrade_srv;
@@ -140,6 +150,7 @@ int main(int argc, char **argv)
         hasTasks_status.data = (vecTaskToDo.size() == 0) ? false : true;
         hasTasks_pub.publish(hasTasks_status);
 
+        // Check ROS queues and callback
         ros::spinOnce();
         loop_rate.sleep();
     }
