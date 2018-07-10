@@ -212,7 +212,6 @@ int main(int argc, char **argv)
             // We wait 10 sec
             // TODO: find a better implementation
             ROS_INFO("Wait %d seconds", sleepTrading);
-            /* ros::Duration(sleepTrading).sleep(); */
             ros::Time start_waiting = ros::Time::now();
             while (ros::Time::now() - start_waiting < ros::Duration(sleepTrading))
             {
@@ -292,7 +291,7 @@ int main(int argc, char **argv)
                 /* receivedTaskToSave = 0; */
             }
  
-            // Auction has ended, clear variables
+            // End of auction, clear variables
             ROS_INFO("Cleaning variables");
             is_robot_available_for_trading = true;
             is_task_available_for_trading = false;
@@ -340,9 +339,11 @@ int main(int argc, char **argv)
                     // Sending
                     ROS_WARN("Name of the service we bid on: %s ",receivedTaskToSave.topic.c_str());
                     if (customSrv_bid_srvC.call(bid_msg))
-                        ROS_INFO("Called bidding service with the bid %.3f for the task %s", (double) bid_msg.request.bid, receivedTaskToSave.idTask.c_str());
+                        ROS_INFO("Called bidding service with the bid %.3f for the task %s",
+                                 (double) bid_msg.request.bid, receivedTaskToSave.idTask.c_str());
                     else
-                        ROS_ERROR("Robot %d Failed to submit bid on task %s", idRobot, receivedTaskToSave.idTask.c_str());
+                        ROS_ERROR("Robot %d Failed to submit bid on task %s", 
+                                  idRobot, receivedTaskToSave.idTask.c_str());
                     
 
                     // Wait for answer - THIS IS DONE WITH THE CALLBACK FCT
