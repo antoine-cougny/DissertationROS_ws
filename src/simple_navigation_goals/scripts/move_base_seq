@@ -14,6 +14,7 @@ from std_msgs.msg import Bool
 
 try:
     from trader.msg import Task, actionToDo
+    from trader.srv import taskToBeTraded, taskToBeTradedRequest
     msgCheck = True
 except:
     print("Trader Custom msg not available")
@@ -53,11 +54,10 @@ class MoveBaseSeq():
 
         # List of task to perform on the different goal
         # We make sure we have enough task to do in the list
-        self.task_seq = [actionToDo() for k in range(len(self.pose_seq))]
+        self.task_seq = [Task() for k in range(len(self.pose_seq))]
         # For now the task do not do anything
         for task in self.task_seq:
-            task.waitTime = 1 #sec
-
+            task.toDo.waitTime = 1 #sec
 
         # For timeout purpose with the last received msg
         self.last_msg = rospy.Time.now()
@@ -86,7 +86,7 @@ class MoveBaseSeq():
 
     def readNewGoal_cb(self, msg):
         self.pose_seq.append(msg.goalPosition_p)
-        self.task_seq.append(msg.toDo)
+        self.task_seq.append(msg)
         self.last_msg = rospy.Time.now()
         self.allGoalsReached = False
         rospy.loginfo("We Got A NEW GOAL")
@@ -115,11 +115,13 @@ class MoveBaseSeq():
         if status == 4:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+" was aborted by the Action Server")
             # rospy.signal_shutdown("Goal pose "+str(self.goal_cnt)+" aborted, shutting down!")
+            sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
             return
 
         if status == 5:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+" has been rejected by the Action Server")
             # rospy.signal_shutdown("Goal pose "+str(self.goal_cnt)+" rejected, shutting down!")
+            sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
             return
 
         if status == 8:
@@ -144,10 +146,62 @@ class MoveBaseSeq():
         # rospy.spin()
         return
 
+    def markTaskAsDone(self, task):
+        """
+        Contact the bc_handler to mark the token as done
+        """
+        # Wait until the service is available
+        rospy.loginfo("Sending task to bc_handler")
+        #rospy.wait_for_service('markTaskDone', timeout=2.0)
+        tryAgain = 5
+        while tryAgain:
+            tryAgain -= 1
+            try:
+                markTaskDone = rospy.ServiceProxy('markTaskDone', taskToBeTraded)
+                markTask = markTaskDone(taskToBeTradedRequest(task))
+
+                if markTask.auctionReady:
+                    rospy.loginfo("BC handler will mark the task as done")
+                    tryAgain = 0
+                else:
+                    rospy.loginfo("bc_handler has not accepted to mark the task as done")
+                    # Wait 1 sec
+                    rospy.sleep(1)
+
+            except rospy.ServiceException, e:
+                rospy.logwarn("Service call to bc_handler failed: %s"%e)
+        return
+
+    def sendFailedTaskToTrader(self, task):
+        # Wait until the service is available
+        #rospy.wait_for_service('taskToTrade', timeout=2.0)
+        tryAgain = 5
+        while tryAgain:
+            tryAgain -= 1
+            try:
+                tradeTaskAgain = rospy.ServiceProxy('taskToTrade', taskToBeTraded)
+                tradeTask = tradeTaskAgain(task)
+
+                if not tradeTask.auctionReady:
+                    # traderNode has not accepted the task, we send it to the decisionNode
+                    rospy.logwarn("traderNode has not accepted the failed task."
+                                 + "Falling back to the decisionNode")
+                    # TODO
+                    # Wait 1 sec
+                    rospy.sleep(1)
+                else:
+                    tryAgain = 0
+                    rospy.loginfo("traderNode has accepted to sell the task again")
+
+            except rospy.ServiceException, e:
+                rospy.logwarn("Service call to traderNode failed: %s"%e)
+        return
+
     def performTask(self, task):
         rospy.loginfo("Starting task at the last reached position")
-        rospy.loginfo("Waiting " + str(task.waitTime) + " sec here")
-        rospy.sleep(task.waitTime)
+        rospy.loginfo("Waiting " + str(task.toDo.waitTime) + " sec here")
+        rospy.sleep(task.toDo.waitTime)
+        self.markTaskAsDone(task)
         return
 
     def runNode(self):
@@ -176,6 +230,7 @@ class MoveBaseSeq():
                 # Goal achieved, perform a task
                 task = 0 # for now
                 # -1 because +1 when goal is reached
+                # TODO we should to the task only if status callback is positive
                 self.performTask(self.task_seq[self.goal_cnt-1])
                 rospy.loginfo("Task done")
             else:
