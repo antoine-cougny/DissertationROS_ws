@@ -23,7 +23,7 @@
             <rosparam param="yea_seq">[90]</rosparam>
         </node>
         <param name="acceptanceThreshold" type="int" value="1" />
-        <param name="robotPK" value="yyy1"/>
+        <param name="robotPK" value="0xdeb7cd76858e8a6b1b0e3208a21fc58c583c658e"/>
         <param name="tradingThreshold" value="1" />
         <param name="idRobot" type="int" value="1" /> 
         
@@ -51,7 +51,7 @@
             <rosparam param="yea_seq">[0]</rosparam>
         </node>
         <param name="acceptanceThreshold" type="int" value="1" />
-        <param name="robotPK" value="yyy2"/>
+        <param name="robotPK" value="0x4cdca0caa8ce1bfa50f6c3c4feb30459d26fe379"/>
         <param name="tradingThreshold" type="int" value="1" />
         <param name="idRobot" type="int" value="2" />
     </group>
@@ -78,7 +78,7 @@
             <rosparam param="yea_seq">[0]</rosparam>
         </node>
         <param name="acceptanceThreshold" type="int" value="1" />
-        <param name="robotPK" value="yyy3"/>
+        <param name="robotPK" value="0xcb92bbf1cddc7dbfdb577bfd238cf435fd23bfbe"/>
         <param name="tradingThreshold" type="int" value="1" />
         <param name="idRobot" type="int" value="3" />
     </group>

@@ -24,7 +24,7 @@ Author name: Emre Can Bulut
     <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
     <param name="acceptanceThreshold" type="int" value="0" />
-    <param name="robotPK" value="yyy0"/>
+    <param name="robotPK" value="0x6a00b6c18dc9ce9f21c0b94e1b60ee031126fc32"/>
     <param name="tradingThreshold" type="int" value="10" />
     <param name="idRobot" type="int" value="0" />
   </group>
