@@ -72,7 +72,7 @@ void announcement_cb(const trader::announcement &msg)
  * Callback function used by the servive linking the decisionNode and the
  * traderNode to open an auction on the given task. 
  */
-bool taskToTrade_cb_srv(trader::taskToBeTraded::Request &req,
+bool taskToTrade_cb_srv(trader::taskToBeTraded::Request  &req,
                         trader::taskToBeTraded::Response &res)
 {
     receivedTaskToTrade = req.task;
@@ -193,7 +193,7 @@ int main(int argc, char **argv)
             is_robot_available_for_trading = false;
 
             // Announcement message
-            announceTask.idTask = receivedTaskToTrade.id;// + "_" + to_string(ros::Time::now().sec); // TODO: use pk of blockchain. TODO: task id is task pk instead?
+            announceTask.idTask = receivedTaskToTrade.id;// TODO: use name of task?
             announceTask.idRobot = idRobot;
             announceTask.task = receivedTaskToTrade;
             announceTask.topic = ns + "_" + announceTask.idTask;
@@ -230,7 +230,8 @@ int main(int argc, char **argv)
                 
                 // We tell the winner his victory
                 ROS_INFO("Tell the winner the auction ended");
-                ROS_INFO("The winner is robot id %d with the bid %.3f", vecIdRobotSrv[indexWinner], vecBid[indexWinner]);
+                ROS_INFO("The winner is robot id %d with the bid %.3f", 
+                         vecIdRobotSrv[indexWinner], vecBid[indexWinner]);
                 ROS_WARN("Contacting the winner with the service %s", 
                     ("/" + announceTask.idTask + "_" + to_string(vecIdRobotSrv[indexWinner])).c_str());
                 trader::auctionWinner winnerSrv;
@@ -257,7 +258,7 @@ int main(int argc, char **argv)
                     if(sendTransaction_srvC.call(bc_srv))
                         ROS_INFO("Transaction initiated");
                     else
-                        ROS_ERROR("Could not contact blockchainNode");
+                        ROS_ERROR("Could not contact blockchainNode"); // TODO do something here, like try again later
                 }
                 else
                     ROS_ERROR("Failed to contact winner");
