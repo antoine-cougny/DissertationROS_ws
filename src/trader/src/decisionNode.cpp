@@ -25,11 +25,11 @@ vector<trader::Task> vecTaskToDo;
 
 /*******************************************************************************
  *
- * Basically, what this node does is store an array of task to perform.
+ * Basically, what this node does is store an array of tasks to perform.
  * It will pick one from the list, check its metrics and based on a treshold
  * value, send it to the task exec or to the trader to get rid of it.
  *
- * If the task list is empty, the node will advertise the robot as idle
+ * The node publishes if the vector containing the tasks is empty or not
  *
  ******************************************************************************/
 
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
         // Before picking a task in the vector, there must be at least one
         // Although the taskexec can handle a set of task in its own queue,
         // we do not want to send a new one while it is busy.
-        // Note that a task could be decomposed as a set of goal which would
-        // be handled in this node.
+        // Note that a task could be decomposed as a set of goals which would
+        // be handled in the taskExec / goal sender node.
         if (vecTaskToDo.size() && isIdle)
         {
             ROS_INFO("We have %d tasks stored", (int) vecTaskToDo.size());
@@ -98,6 +98,7 @@ int main(int argc, char **argv)
             uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
             int index_selectedTask = distribution(generator);
             task_msg = vecTaskToDo[index_selectedTask];
+            ROS_ERROR("Size: %d Idx: %d Delete: %d", vecTaskToDo.size(), index_selectedTask, vecTaskToDo.begin() + index_selectedTask);
 
             // Check the metrics of the selected task
             trader::metrics metric_srv;
