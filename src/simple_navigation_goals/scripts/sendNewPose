@@ -10,8 +10,10 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 
+from trader.msg import Task, actionToDo
+
 def goalSender():
-    pub = rospy.Publisher('goalSender', Pose, queue_size=10)
+    pub = rospy.Publisher('goalSender', Task, queue_size=10)
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
@@ -29,12 +31,15 @@ def goalSender():
             newPoint = Point(*newGoalPos)
             newQuat = Quaternion(*(quaternion_from_euler(0, 0, newGoalOrient*math.pi/180, axes='sxyz')))
         except TypeError as e:
-            print("\n\tIS IT TOO HARD TO INPUT NIMBER LIKE 0.5,1.5,0 AND NOT SOME WEIRD STUFF ???")
+            print("\n\tIS IT TOO HARD TO INPUT NUMBER LIKE 0.5,1.5,0 AND NOT SOME WEIRD STUFF ???")
             continue
         newPose = Pose(newPoint, newQuat)
+        toDo = actionToDo(1)
+        
+        newTask = Task("1", "manual_goal", newPose, 100, toDo)
 
-        rospy.loginfo(newPose)
-        pub.publish(newPose)
+        rospy.loginfo(newTask)
+        pub.publish(newTask)
         rate.sleep()
 
 if __name__ == '__main__':
