@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="computer">
         <node name="trader" pkg="trader" type="trader_trader" />
@@ -6,7 +7,7 @@
         <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
 
         <param name="acceptanceThreshold" type="int" value="0" />
-        <param name="robotPK" value="yyy0"/>
+        <param name="robotPK" value="0x6a00b6c18dc9ce9f21c0b94e1b60ee031126fc32"/>
         <param name="tradingThreshold" type="int" value="10" />
         <param name="idRobot" type="int" value="0" />
     </group>
@@ -32,7 +33,7 @@
         -->
 
         <param name="acceptanceThreshold" type="int" value="1" />
-        <param name="robotPK" value="yyy1"/>
+        <param name="robotPK" value="0xdeb7cd76858e8a6b1b0e3208a21fc58c583c658e"/>
         <param name="tradingThreshold" value="10" />
         <param name="idRobot" type="int" value="1" />
         
