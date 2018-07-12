@@ -11,6 +11,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 from std_msgs.msg import Bool
+from std_srvs.srv import Trigger, TriggerResponse
 
 try:
     from trader.msg import Task, actionToDo
@@ -72,7 +73,14 @@ class MoveBaseSeq():
         # Create a publisher to let other nodes if the robot is idle or not
         self.isIdle_pub = rospy.Publisher("isIdle", Bool, queue_size=10)
 
-        #Create action client
+        # Create service to remotely kill the robot
+        self.robotKiller_srvS = rospy.Service('robotDeath', Trigger, self.robotDeath_cb)
+        self.isDead = False
+
+        # Quick patch to make sure the robot does not do a task if the goal was cancelled
+        self.taskAborted = False
+
+        # Create action client
         self.client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
         wait = self.client.wait_for_server(rospy.Duration(10.0))
@@ -115,18 +123,40 @@ class MoveBaseSeq():
         if status == 4:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+" was aborted by the Action Server")
             # rospy.signal_shutdown("Goal pose "+str(self.goal_cnt)+" aborted, shutting down!")
-            sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
+            self.taskAborted = True
+            self.sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
             return
 
         if status == 5:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+" has been rejected by the Action Server")
             # rospy.signal_shutdown("Goal pose "+str(self.goal_cnt)+" rejected, shutting down!")
-            sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
+            self.taskAborted = True
+            self.sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
             return
 
         if status == 8:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+\
                           " received a cancel request before it started executing, successfully cancelled!")
+
+    def robotDeath_cb(self, req):
+        """ Call back function used to kill or revive a robot """
+        self.isDead = not self.isDead
+        if self.isDead:
+            # Cancel the current goal
+            self.client.cancel_all_goals()
+            # Block any incoming auction
+            self.isIdle_pub.publish(Bool(False))
+            rospy.logerr("The robot has been killed! The current goal has been cancelled.")
+            # The robot might be killed while being idle. The task is sent only if we haven't finished it
+            if not self.allGoalsReached:
+                # Send the task to the traderNode again
+                self.sendFailedTaskToTrader(self.task_seq[self.goal_cnt-1])
+        else:
+            #self.goal_cnt -= 1
+            rospy.logwarn("Hurrah, the robot is alive again! " +
+                          "What a good paramedic you are! " +
+                          "The previous goal is sent again for completion.")
+        return TriggerResponse(self.isDead, "Changed State")
 
     def movebase_client(self, nextPose):
         """
@@ -173,6 +203,7 @@ class MoveBaseSeq():
         return
 
     def sendFailedTaskToTrader(self, task):
+        rospy.logwarn("The task that was in execution will be re-auctioned")
         # Wait until the service is available
         #rospy.wait_for_service('taskToTrade', timeout=2.0)
         tryAgain = 5
@@ -184,13 +215,14 @@ class MoveBaseSeq():
 
                 if not tradeTask.auctionReady:
                     # traderNode has not accepted the task, we send it to the decisionNode
-                    rospy.logwarn("traderNode has not accepted the failed task."
+                    rospy.logwarn("traderNode has not accepted the failed task. "
                                  + "Falling back to the decisionNode")
-                    # TODO
+                    # TODO: see comment above
                     # Wait 1 sec
                     rospy.sleep(1)
                 else:
                     tryAgain = 0
+                    self.taskAborted = False
                     rospy.loginfo("traderNode has accepted to sell the task again")
 
             except rospy.ServiceException, e:
@@ -212,11 +244,13 @@ class MoveBaseSeq():
             # We advertise if the robot is idle or not. We consider it
             # to be in an 'idle' state when all the tasks this node received
             # have been done/achieved by the nav stack
+            # If the robot is dead, we are considered busy, so not idle
             state = Bool()
-            state.data = self.allGoalsReached
+            # True if alive & all tasks are done
+            state.data = self.allGoalsReached and not self.isDead
             self.isIdle_pub.publish(state)
 
-            if self.goal_cnt < len(self.pose_seq):
+            if self.goal_cnt < len(self.pose_seq) and not self.isDead:
                 # Sending a new goal to the stack
                 rospy.logwarn("Sending new goal")
                 self.goalReached = False
@@ -228,11 +262,11 @@ class MoveBaseSeq():
                     rospy.logdebug("Small wait")
 
                 # Goal achieved, perform a task
-                task = 0 # for now
                 # -1 because +1 when goal is reached
-                # TODO we should to the task only if status callback is positive
-                self.performTask(self.task_seq[self.goal_cnt-1])
-                rospy.loginfo("Task done")
+                # TODO we should do the task only if status callback is positive
+                if not self.isDead and not self.taskAborted:
+                    self.performTask(self.task_seq[self.goal_cnt-1])
+                    rospy.loginfo("Task done")
             else:
                 # The list of nodes has been visited
                 self.allGoalsReached = True
