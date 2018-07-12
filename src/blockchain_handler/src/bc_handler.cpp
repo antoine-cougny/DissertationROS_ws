@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     transactionBC_srvS = n.advertiseService("transactionBC", sendTransaction_bc);
     // Get transaction from taskExec, mark task as done
     ros::ServiceServer markTaskDone_srvS;
-    transactionBC_srvS = n.advertiseService("markTaskDone", markTransactionDone_bc);
+    markTaskDone_srvS = n.advertiseService("markTaskDone", markTransactionDone_bc);
 
     // Send task to JS node / eth client
     ros::ServiceClient deployTransaction_srvC;
