@@ -136,6 +136,7 @@ bool biddingStatus_cb(trader::auctionWinner::Request  &req,
     }
     
     // Clear Variables
+    // Resetting these flags here speeds up the robots for the next auction
     is_robot_available_for_trading = true;
     external_auction_available = false;
 
@@ -363,8 +364,9 @@ int main(int argc, char **argv)
                 ROS_ERROR("Robot %d Failed to call service metricsNode", idRobot);
 
             // Clear Variables
-            //is_robot_available_for_trading = true;
-            //external_auction_available = false;
+            // We make sure these flags are reset -> if we do not bid
+            is_robot_available_for_trading = true;
+            external_auction_available = false;
             ROS_INFO("Auction DONE for trader");
         }
 
