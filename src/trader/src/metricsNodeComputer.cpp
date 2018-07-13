@@ -15,7 +15,7 @@ using namespace std;
 bool metricsCalc_cb(trader::metrics::Request &Task, trader::metrics::Response &metrics)
 {
     metrics.cost = 100000;
-    cout << "cost pc: "<< metrics.cost << endl;
+    ROS_DEBUG("Cost PC: %d", metrics.cost);
     return true;
 }
 
