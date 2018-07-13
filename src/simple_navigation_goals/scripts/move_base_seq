@@ -263,7 +263,6 @@ class MoveBaseSeq():
 
                 # Goal achieved, perform a task
                 # -1 because +1 when goal is reached
-                # TODO we should do the task only if status callback is positive
                 if not self.isDead and not self.taskAborted:
                     self.performTask(self.task_seq[self.goal_cnt-1])
                     rospy.loginfo("Task done")
@@ -271,15 +270,7 @@ class MoveBaseSeq():
                 # The list of nodes has been visited
                 self.allGoalsReached = True
                 self.timeFinishList = rospy.Time.now()
-                #rospy.loginfo("we wait for smth to do")
-
-            # Auto closing after 5min
-            # timeoutDelay = 300 # sec
-            # if rospy.Time.now() - self.last_msg > rospy.Duration(timeoutDelay)\
-            #         and rospy.Time.now() - self.timeFinishList > rospy.Duration(timeoutDelay):
-            #     rospy.logwarn("QUIT (time-out)")
-            #     rospy.signal_shutdown("Timeout, shutting down!")
-            #     return
+                rospy.logdebug("We wait for smth to do")
 
 
 if __name__ == '__main__':
