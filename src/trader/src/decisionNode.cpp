@@ -40,8 +40,7 @@ void isIdle_cb(const std_msgs::Bool &msg)
 
 void newTask_cb(const trader::Task &msg)
 {
-    // Do some stuff like adding it to an array or a vector
-    // Pay attention to pointers and content of the message
+    // Store the received task
     vecTaskToDo.push_back(msg);
 }
 
@@ -93,12 +92,15 @@ int main(int argc, char **argv)
         if (vecTaskToDo.size() && isIdle)
         {
             ROS_INFO("We have %d tasks stored", (int) vecTaskToDo.size());
+
             // Select a task in the vector (uniform distribution)
-            // TODO: check if (random) does not come from here
-            uniform_int_distribution<int> distribution(0,vecTaskToDo.size());
+            uniform_int_distribution<int> distribution(0, vecTaskToDo.size()); // set -1 here?, see next comment
             int index_selectedTask = distribution(generator);
+            // The upper limit is included in the generator, it idx =,we have a seg fault
+            ROS_DEBUG("Size: %d Selected Idx: %d", (int) vecTaskToDo.size(), (int) index_selectedTask);
+            if (index_selectedTask == vecTaskToDo.size()) index_selectedTask--;
+
             task_msg = vecTaskToDo[index_selectedTask];
-            ROS_ERROR("Size: %d Idx: %d Delete: %d", vecTaskToDo.size(), index_selectedTask, vecTaskToDo.begin() + index_selectedTask);
 
             // Check the metrics of the selected task
             trader::metrics metric_srv;
@@ -151,7 +153,7 @@ int main(int argc, char **argv)
         hasTasks_status.data = (vecTaskToDo.size() == 0) ? false : true;
         hasTasks_pub.publish(hasTasks_status);
 
-        // Check ROS queues and callback
+        // Check ROS queues and callbacks
         ros::spinOnce();
         loop_rate.sleep();
     }
