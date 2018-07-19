@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
 
     ns = ros::this_node::getNamespace();
-    ns = ns.substr(1, ns.size() - 1); // Delete an extra / at the beginning
+    ns = ns.substr(1, ns.size() - 1); // Delete an extra '/' at the beginning
 
     // Get transaction from traderNode
     ros::ServiceServer transactionBC_srvS;
@@ -81,25 +81,36 @@ int main(int argc, char **argv)
             <blockchain_handler::transactionBC>("/markTaskDoneBC");
 
     n.param<int>("idRobot", idRobot, 0);
-    n.param<string>("robotPK", robotPK, "xxx"); // TODO
+    n.param<string>("robotPK", robotPK, "xxx");
+
+    /* In case we have a problem somewhere. I don't want amything stuck
+     * I would rather loose a transaction on the blockchain than having the
+     * whole system crashing.
+     * However, as I improved the DApp (faster and more stable) now, 10 failed
+     * attempts can be seen as a timeout.
+     * Improving this can be done by storing a vector of the different 
+     * incoming transactions
+     */
+    int counter = 10;
 
     while(ros::ok())
     {
-        while (transactionAvailable)
+        while (transactionAvailable && counter)
         {
-            ROS_INFO("A transaction is available to be sent to the BC");
+            counter--;
+            ROS_DEBUG("A transaction is available to be sent to the BC");
             if (deployTransaction_srvC.call(transaction_msg))
             {
-                ROS_INFO("Contacted JS node for task trading");
+                ROS_DEBUG("Contacted JS node for task trading");
                 if (transaction_msg.response.status)
                 {
-                    ROS_INFO("Transaction will be processed by the node");
+                    ROS_INFO("Transaction (transfer) will be processed by the node");
                     transactionAvailable = false;
                 }
                 else
                 {
-                    ROS_INFO("The node is busy, we will wait for 1 sec");
-                    ros::Duration(1).sleep();
+                    ROS_INFO("The node is busy, we will wait for 5 sec");
+                    ros::Duration(5).sleep();
                 }
             }
             else
@@ -107,22 +118,25 @@ int main(int argc, char **argv)
                 ros::Duration(1).sleep();
         }
 
-        while (markTransactionDoneAvailable)
+        while (markTransactionDoneAvailable && counter)
         {
-            ROS_INFO("Task %s will be marked as done on the BC", taskDone.request.idTask.c_str());
+            counter--;
+            ROS_DEBUG("Task %s will be marked as done on the BC",
+                      taskDone.request.idTask.c_str());
             taskDone.request.idSeller = robotPK;
             if (markTaskDone_srvC.call(taskDone))
             {
-                ROS_INFO("Contacted JS node to mark task as done");
+                ROS_DEBUG("Contacted JS node to mark task as done");
                 if (taskDone.response.status)
                 {
-                    ROS_INFO("Transaction will be processed by the node");
+                    ROS_INFO("Transaction (matkTaskDone %s) will be processed by the node",
+                             taskDone.request.idTask.c_str());
                     markTransactionDoneAvailable = false;
                 }
                 else
                 {
-                    ROS_INFO("The node is busy, we will wait for 1 sec");
-                    ros::Duration(1).sleep();
+                    ROS_INFO("The node is busy, we will wait for 5 sec");
+                    ros::Duration(5).sleep();
                 }
             }
             else
@@ -132,6 +146,7 @@ int main(int argc, char **argv)
             
         ros::spinOnce();
         loop_rate.sleep();
+        counter = 10;
     }
 
     return 0;
