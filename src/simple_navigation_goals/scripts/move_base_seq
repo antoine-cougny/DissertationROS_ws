@@ -97,7 +97,7 @@ class MoveBaseSeq():
         self.task_seq.append(msg)
         self.last_msg = rospy.Time.now()
         self.allGoalsReached = False
-        rospy.loginfo("We Got A NEW GOAL")
+        rospy.logdebug("We Got A NEW GOAL")
 
     def active_cb(self):
         rospy.loginfo("Goal pose "+str(self.goal_cnt+1)+\
@@ -168,11 +168,11 @@ class MoveBaseSeq():
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = nextPose
         # Log
-        rospy.loginfo("Sending goal pose "+str(self.goal_cnt+1)+" to Action Server")
-        rospy.loginfo(str(self.pose_seq[self.goal_cnt]))
+        rospy.logdebug("Sending goal pose "+str(self.goal_cnt+1)+" to Action Server")
+        rospy.logdebug(str(self.pose_seq[self.goal_cnt]))
         # Send message
         self.client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
-        rospy.loginfo("Sent!")
+        rospy.logdebug("Sent!")
         # rospy.spin()
         return
 
@@ -181,7 +181,7 @@ class MoveBaseSeq():
         Contact the bc_handler to mark the token as done
         """
         # Wait until the service is available
-        rospy.loginfo("Sending task to bc_handler")
+        rospy.logdebug("Sending task to bc_handler")
         #rospy.wait_for_service('markTaskDone', timeout=2.0)
         tryAgain = 5
         while tryAgain:
@@ -207,30 +207,31 @@ class MoveBaseSeq():
         # Wait until the service is available
         #rospy.wait_for_service('taskToTrade', timeout=2.0)
         tryAgain = 5
-        while tryAgain:
-            tryAgain -= 1
-            try:
-                tradeTaskAgain = rospy.ServiceProxy('taskToTrade', taskToBeTraded)
-                tradeTask = tradeTaskAgain(task)
+        if self.goal_cnt > 1: # Ugly quickfix for initialization
+            while tryAgain:
+                tryAgain -= 1
+                try:
+                    tradeTaskAgain = rospy.ServiceProxy('taskToTrade', taskToBeTraded)
+                    tradeTask = tradeTaskAgain(task)
 
-                if not tradeTask.auctionReady:
-                    # traderNode has not accepted the task, we send it to the decisionNode
-                    rospy.logwarn("traderNode has not accepted the failed task. "
-                                 + "Falling back to the decisionNode")
-                    # TODO: see comment above
-                    # Wait 1 sec
-                    rospy.sleep(1)
-                else:
-                    tryAgain = 0
-                    self.taskAborted = False
-                    rospy.loginfo("traderNode has accepted to sell the task again")
+                    if not tradeTask.auctionReady:
+                        # traderNode has not accepted the task, we send it to the decisionNode
+                        rospy.logwarn("traderNode has not accepted the failed task. "
+                                    + "Falling back to the decisionNode")
+                        # TODO: see comment above
+                        # Wait 1 sec
+                        rospy.sleep(1)
+                    else:
+                        tryAgain = 0
+                        self.taskAborted = False
+                        rospy.loginfo("traderNode has accepted to sell the task again")
 
-            except rospy.ServiceException, e:
-                rospy.logwarn("Service call to traderNode failed: %s"%e)
+                except rospy.ServiceException, e:
+                    rospy.logwarn("Service call to traderNode failed: %s"%e)
         return
 
     def performTask(self, task):
-        rospy.loginfo("Starting task at the last reached position")
+        rospy.logdebug("Starting task at the last reached position")
         rospy.loginfo("Waiting " + str(task.toDo.waitTime) + " sec here")
         rospy.sleep(task.toDo.waitTime)
         self.markTaskAsDone(task)
@@ -252,7 +253,7 @@ class MoveBaseSeq():
 
             if self.goal_cnt < len(self.pose_seq) and not self.isDead:
                 # Sending a new goal to the stack
-                rospy.logwarn("Sending new goal")
+                rospy.logdebug("Sending new goal")
                 self.goalReached = False
                 self.movebase_client(self.pose_seq[self.goal_cnt])
 
@@ -263,7 +264,10 @@ class MoveBaseSeq():
 
                 # Goal achieved, perform a task
                 # -1 because +1 when goal is reached
-                if not self.isDead and not self.taskAborted:
+                # Last condition for initialization, to be sure we get robot
+                # position in metrics node. We skip the first one.
+                # QUICKFIX. TODO: Improve this
+                if not self.isDead and not self.taskAborted and self.goal_cnt > 1:
                     self.performTask(self.task_seq[self.goal_cnt-1])
                     rospy.loginfo("Task done")
             else:
