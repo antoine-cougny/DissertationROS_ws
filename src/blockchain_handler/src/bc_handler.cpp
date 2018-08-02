@@ -129,7 +129,7 @@ int main(int argc, char **argv)
                 ROS_DEBUG("Contacted JS node to mark task as done");
                 if (taskDone.response.status)
                 {
-                    ROS_INFO("Transaction (matkTaskDone %s) will be processed by the node",
+                    ROS_INFO("Transaction (markTaskDone %s) will be processed by the node",
                              taskDone.request.idTask.c_str());
                     markTransactionDoneAvailable = false;
                 }
