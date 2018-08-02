@@ -79,6 +79,7 @@ class MoveBaseSeq():
 
         # Quick patch to make sure the robot does not do a task if the goal was cancelled
         self.taskAborted = False
+        self.resetTask = False
 
         # Create action client
         self.client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
@@ -116,6 +117,7 @@ class MoveBaseSeq():
         if status == 2:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+\
                           " received a cancel request after it started executing, completed execution!")
+            self.taskAborted = True
 
         if status == 3:
             rospy.loginfo("Goal pose "+str(self.goal_cnt)+" reached")
@@ -223,7 +225,7 @@ class MoveBaseSeq():
                         rospy.sleep(1)
                     else:
                         tryAgain = 0
-                        self.taskAborted = False
+                        self.resetTask = True
                         rospy.loginfo("traderNode has accepted to sell the task again")
 
                 except rospy.ServiceException, e:
@@ -267,9 +269,14 @@ class MoveBaseSeq():
                 # Last condition for initialization, to be sure we get robot
                 # position in metrics node. We skip the first one.
                 # QUICKFIX. TODO: Improve this
-                if not self.isDead and not self.taskAborted and self.goal_cnt > 1:
+                if (not self.isDead) and (not self.taskAborted) and (self.goal_cnt > 1):
                     self.performTask(self.task_seq[self.goal_cnt-1])
                     rospy.loginfo("Task done")
+                # Ugly quickfix because the previous test is valid sometimes after contacting traderNode
+                # Depends on python stack. dont have time to find smth better for the moment
+                if self.resetTask:
+                    self.taskAborted = False
+                    self.resetTask = False
             else:
                 # The list of nodes has been visited
                 self.allGoalsReached = True
