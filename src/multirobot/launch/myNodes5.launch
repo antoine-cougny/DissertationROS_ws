@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>  
+    <!-- BEGIN ROBOT 1-->
+    <group ns="robot1">
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[1,1,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="1" />
+        <param name="robotPK" value="0xdeb7cd76858e8a6b1b0e3208a21fc58c583c658e"/>
+        <param name="tradingThreshold" value="1" />
+        <param name="idRobot" type="int" value="1" /> 
+    </group>
+
+
+    <!-- BEGIN ROBOT 2 -->
+    <group ns="robot2">
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[2,2,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="1" />
+        <param name="robotPK" value="0x4cdca0caa8ce1bfa50f6c3c4feb30459d26fe379"/>
+        <param name="tradingThreshold" type="int" value="1" />
+        <param name="idRobot" type="int" value="2" />
+    </group>
+
+
+    <!-- BEGIN ROBOT 3 -->
+
+    <group ns="robot3">
+        <param name="tf_prefix" value="robot3_tf" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[1,3,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="1" />
+        <param name="robotPK" value="0xcb92bbf1cddc7dbfdb577bfd238cf435fd23bfbe"/>
+        <param name="tradingThreshold" type="int" value="1" />
+        <param name="idRobot" type="int" value="3" />
+    </group>
+
+
+    <!-- BEGIN ROBOT 4 -->
+
+    <group ns="robot4">
+        <param name="tf_prefix" value="robot4_tf" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[2,-2,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="1" />
+        <param name="robotPK" value="0xee4f916fa55e2c09b7c8fc311258f8bb29bb6c58"/>
+        <param name="tradingThreshold" type="int" value="1" />
+        <param name="idRobot" type="int" value="4" />
+    </group>
+
+
+    <!-- BEGIN ROBOT 5 -->
+
+    <group ns="robot5">
+        <param name="tf_prefix" value="robot5_tf" />
+        <node name="trader" pkg="trader" type="trader_trader" />
+        <node name="metrics" pkg="trader" type="trader_metrics" />
+        <node name="decision" pkg="trader" type="trader_decision" />
+        <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
+
+        <node name="move_base_seq" pkg="simple_navigation_goals" type="move_base_seq">
+            <rosparam param="p_seq">[-1,-1,0]</rosparam>
+            <rosparam param="yea_seq">[0]</rosparam>
+        </node>
+        <param name="acceptanceThreshold" type="int" value="1" />
+        <param name="robotPK" value="0x6000ffc2426778d4b4d04f7b690bbcf52bb56b3f"/>
+        <param name="tradingThreshold" type="int" value="1" />
+        <param name="idRobot" type="int" value="5" />
+    </group>
+</launch>
