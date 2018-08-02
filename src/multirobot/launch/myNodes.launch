@@ -16,8 +16,8 @@
         <param name="tradingThreshold" value="1" />
         <param name="idRobot" type="int" value="1" /> 
     </group>
- 
-    
+
+
     <!-- BEGIN ROBOT 2 -->
     <group ns="robot2">
         <node name="trader" pkg="trader" type="trader_trader" />
@@ -35,7 +35,7 @@
         <param name="idRobot" type="int" value="2" />
     </group>
 
-    
+
     <!-- BEGIN ROBOT 3 -->
 
     <group ns="robot3">
