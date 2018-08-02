@@ -49,7 +49,8 @@ float calcMovingCost(geometry_msgs::Pose currentPose,
 bool metricsCalc_cb(trader::metrics::Request &Task, trader::metrics::Response &metrics)
 {
     /* ROS_INFO("Got new position"); */
-    metrics.cost = 10*calcMovingCost(myPose, Task.task.goalPosition_p);
+    metrics.cost = 10*calcMovingCost(myPose, Task.task.goalPosition_p)
+                    + Task.task.toDo.waitTime;
     ROS_INFO("Cost: %.3f", metrics.cost);
     return true;
 }
