@@ -113,7 +113,7 @@ int main(int argc, char **argv)
             task_msg = vecTaskToDo[index_selectedTask];
 
             // How many times this task has been reauctioned?
-            ROS_ERROR("Number of reauction on task id %s: %d", task_msg.id.c_str(), (int) task_msg.nbTimesBeenAccepted);
+            ROS_DEBUG("Number of reauction on task id %s: %d", task_msg.id.c_str(), (int) task_msg.nbTimesBeenAccepted);
 
             // Check the metrics of the selected task
             trader::metrics metric_srv;

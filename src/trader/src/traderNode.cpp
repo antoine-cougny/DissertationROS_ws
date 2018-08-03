@@ -62,8 +62,6 @@ void announcement_cb(const trader::announcement &msg)
     {
         // Ignore message because we triggered this auction
         // !!! Not safe if 2 auctions at the same time.
-        // !!! TODO: verif on ID but will be implemented later by using the PK
-        //           of the token on the blockchain to id it.
         ROS_INFO("Task rejected because we launched it or because we are busy");
     }
 }
@@ -134,7 +132,7 @@ bool biddingStatus_cb(trader::auctionWinner::Request  &req,
         ROS_INFO("Robot %d lost the auction", idRobot);
         res.pk = "";
     }
-    
+
     // Clear Variables
     // Resetting these flags here speeds up the robots for the next auction
     is_robot_available_for_trading = true;
@@ -183,13 +181,13 @@ int main(int argc, char **argv)
     n.param<int>("idRobot", idRobot, 0);
     n.param<int>("acceptanceThreshold", acceptanceThreshold, 2);
     n.param<string>("robotPK", robotPK, "xxx"); // TODO
-    
+
     while(ros::ok())
     {
         // TODO: divide code in functions :p
         if (is_task_available_for_trading)
         {
-            ROS_INFO("Start of auction");
+            ROS_INFO("Start of auction on task id %s", receivedTaskToTrade.id.c_str());
             // We trigger an auction 
             is_robot_available_for_trading = false;
 
