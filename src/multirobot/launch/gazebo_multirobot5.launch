@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
-Author name: Emre Can Bulut & ant0ine
+Author name: Emre Can Bulut
 -->
 
 <launch>
@@ -13,19 +13,6 @@ Author name: Emre Can Bulut & ant0ine
     <arg name="gui" value="true" />
     <arg name="world_name" value="$(arg world_file)"/>
   </include>
-
-  <group ns="computer">
-    <!-- ant0ine's project -->
-    <node name="trader" pkg="trader" type="trader_trader" />
-    <node name="metricsPC" pkg="trader" type="trader_metricsPC" />
-    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>
-    <node name="bc_handler" pkg="blockchain_handler" type="bc_handler" />
-
-    <param name="acceptanceThreshold" type="int" value="0" />
-    <param name="robotPK" value="0x6a00b6c18dc9ce9f21c0b94e1b60ee031126fc32"/>
-    <param name="tradingThreshold" type="int" value="10" />
-    <param name="idRobot" type="int" value="0" />
-  </group>
 
   <!-- include our robots -->
   <include file="$(find multirobot)/launch/multirobot5.launch"/>

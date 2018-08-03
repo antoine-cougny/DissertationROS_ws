@@ -7,9 +7,7 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /Global Map1/Planner1
-        - /Local Map1
-        - /RobotModel4
-        - /RobotModel5
+        - /LaserScan4/Status1
       Splitter Ratio: 0.433999985
     Tree Height: 573
   - Class: rviz/Selection
@@ -627,9 +625,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.297199994
+      Max Intensity: -999999
       Min Color: 0; 255; 0
-      Min Intensity: 0.297199994
+      Min Intensity: 999999
       Name: LaserScan
       Position Transformer: XYZ
       Queue Size: 10
@@ -1215,6 +1213,36 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: z
+      Class: rviz/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0.297199994
+      Min Color: 255; 0; 255
+      Min Intensity: 0.297199994
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.00999999978
+      Style: Points
+      Topic: robot4/scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: false
+      Value: true
+    - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: true
       Enabled: true
@@ -1435,6 +1463,36 @@ Visualization Manager:
       Topic: robot5/move_base/NavfnROS/plan
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: z
+      Class: rviz/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0.297199994
+      Min Color: 255; 255; 0
+      Min Intensity: 0.297199994
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.00999999978
+      Style: Points
+      Topic: robot5/scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1462,7 +1520,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -4.69503069
+      Angle: -4.71003056
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -1472,11 +1530,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 42.3538132
+      Scale: 62.8879395
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 0.480956942
-      Y: 0.787809968
+      X: -0.813727379
+      Y: 0.46958667
     Saved: ~
 Window Geometry:
   "&Displays":
@@ -1495,4 +1553,4 @@ Window Geometry:
     collapsed: false
   Width: 1600
   X: 0
-  Y: 0
+  Y: 120
