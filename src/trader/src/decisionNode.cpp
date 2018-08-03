@@ -21,6 +21,7 @@ using namespace std;
 bool isIdle = true;
 int idRobot = 1000;
 string ns;
+trader::Task receivedTaskToStore;
 vector<trader::Task> vecTaskToDo;
 
 /*******************************************************************************
@@ -41,7 +42,17 @@ void isIdle_cb(const std_msgs::Bool &msg)
 void newTask_cb(const trader::Task &msg)
 {
     // Store the received task
-    vecTaskToDo.push_back(msg);
+    receivedTaskToStore = msg;
+    receivedTaskToStore.nbTimesBeenAccepted += 1;
+    if (receivedTaskToStore.nbTimesBeenAccepted < 5)
+    {
+        ROS_DEBUG("New Task stored");
+        vecTaskToDo.push_back(receivedTaskToStore);
+    }
+    else
+    {
+        ROS_ERROR("Task id %s has been reauctioned too many times, we discard it", msg.id.c_str());
+    }
 }
 
 int main(int argc, char **argv)
@@ -91,8 +102,7 @@ int main(int argc, char **argv)
         // be handled in the taskExec / goal sender node.
         if (vecTaskToDo.size() && isIdle)
         {
-            ROS_INFO("We have %d tasks stored", (int) vecTaskToDo.size());
-
+            ROS_INFO("Robot %d: We have %d tasks stored", (int) idRobot, (int) vecTaskToDo.size());
             // Select a task in the vector (uniform distribution)
             uniform_int_distribution<int> distribution(0, vecTaskToDo.size()); // set -1 here?, see next comment
             int index_selectedTask = distribution(generator);
@@ -101,6 +111,9 @@ int main(int argc, char **argv)
             if (index_selectedTask == vecTaskToDo.size()) index_selectedTask--;
 
             task_msg = vecTaskToDo[index_selectedTask];
+
+            // How many times this task has been reauctioned?
+            ROS_ERROR("Number of reauction on task id %s: %d", task_msg.id.c_str(), (int) task_msg.nbTimesBeenAccepted);
 
             // Check the metrics of the selected task
             trader::metrics metric_srv;
