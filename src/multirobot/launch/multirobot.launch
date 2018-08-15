@@ -32,7 +32,7 @@
 
     <!-- BEGIN ROBOT 3 -->
     <group ns="robot3">
-        <param name="tf_prefix" value="robot4_tf" />
+        <param name="tf_prefix" value="robot3_tf" />
     </group>
     <include file="$(find multirobot)/launch/one_robot.launch" >
       <arg name="init_pose_x" value="1" />
