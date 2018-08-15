@@ -13,7 +13,7 @@ from tf.transformations import quaternion_from_euler
 from trader.msg import Task, actionToDo
 
 def goalSender():
-    pub = rospy.Publisher('goalSender', Task, queue_size=10)
+    pub = rospy.Publisher('/robot1/goalSender', Task, queue_size=10)
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
