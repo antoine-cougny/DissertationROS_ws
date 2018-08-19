@@ -41,8 +41,8 @@ roslaunch multirobot myNodes5.launch
 ```
 
 ## Software Architecture
+### Logical Components
 ![Logical Components](resources/LCBD_Logical_System_ROS_LA.png)
-![Detailed Architecture](resources/ROS_Architecture.png)
 
 ### Explanations
 **bc_handler** The only purpose of this node is to be an uplink interface between
@@ -83,6 +83,9 @@ task would not be lost.
 Lastly, this node broadcasts the status of the robot (idle or not) so that other
 nodes can wait for the robot to be free if necessary.
 
-## Auction Proceedings
+### Detailed Architecture
+![Detailed Architecture](resources/ROS_Architecture.png)
+
+## Auction Proceedings - Sequence Diagram
 ![Sequence Diagram](resources/ES_Scenario_Auction_From_DApp.png)
 
