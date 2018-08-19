@@ -45,7 +45,8 @@ roslaunch multirobot myNodes5.launch
 ![Logical Components](resources/LCBD_Logical_System_ROS_LA.png)
 
 ### Explanations
-**bc_handler** The only purpose of this node is to be an uplink interface between
+**bc_handler**
+The only purpose of this node is to be an uplink interface between
 the robot and a ÐApp. Its only two functions are
 - sending the result of auctions in a message including the PK of the seller, of
 the buyer and the task id.
@@ -57,8 +58,9 @@ traderNode is only in charge of dealing with auctions. Another important aspect
 is, if the ÐApp is unresponsive at some point, bc_handler will try to contact it a
 few seconds later.
 
-**traderNode & decisionNode** Splitting up traderNode into two subcompo-
-nents is quite obvious because this node participates in auctions another instance
+**traderNode & decisionNode**
+Splitting up traderNode into two subcomponents is quite obvious because this node 
+participates in auctions another instance
 triggered. However, decisionNode needs further explanations: this node is in
 charge of storing tasks that have been won by the trader in memory (a vector
 object is used) and selecting one task among those available. Then, it checks, with
@@ -67,11 +69,13 @@ of the robot could have changed between the moment the task has been won and
 the moment the task has been selected to be performed. If the benefit is too low,
 the task is sent back to the trader to be sold; otherwise, it is sent to the execNode.
 
-**Note:** for simplification purposes, at the moment, we authorize only one auction
+**Note:**
+for simplification purposes, at the moment, we authorize only one auction
 at a time and if the robot is idle, meaning the robot is not busy with a mission.
 Consequently, decisionNode has, at most, one task stored in memory.
 
-**execNode** This node is in charge of decomposing a task into two elements: a
+**execNode**
+This node is in charge of decomposing a task into two elements: a
 goal position to go to and a task to achieve. It first sends the goal position to
 the Navigation Stack and listens to its feedback. Once the position has been
 reached, the action associated with the task is performed. Then, the node signals
